@@ -1,21 +1,21 @@
 from reflinkcep.ast import AST, Query
-from reflinkcep.DST import (DST, DataUpdate, EventStreamUpdate, Predicte,
+from reflinkcep.DST import (DST, DataUpdate, EventStreamUpdate, Predicte, Set,
                             State, Transition)
 from reflinkcep.executor import Executor
 
 
 def compile_spat(ast: AST) -> DST:
     assert ast["type"] == "spat"
-    name = ast["name"]
+    name: str = ast["name"]
     ev = ast["event"]
     cndt = ast["cndt"]
 
-    S = set([ev])
-    P = set([name])
-    X = set()
-    Y = set([name])
+    S = Set([ev])
+    P = Set([name])
+    X = Set()
+    Y = Set([name])
     q0 = State(f"{name}0")
-    qf = State(f"{name}f", lambda p: name if p == name else None)
+    qf = State(f"{name}f", {name: name})
     Q = set([q0, qf])
     D = [Transition(q0, Predicte(ev, cndt), qf, DataUpdate(), EventStreamUpdate(name))]
 

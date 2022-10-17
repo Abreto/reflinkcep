@@ -16,8 +16,9 @@ class Executor:
         return tuple((self.i, conf))
 
     def feed(self, event: Event) -> Stream[Match]:
-        if event["name"] == 1 and event["price"] < 5:
-            return [{"a1": event}]
+        # if event["name"] == 1 and event["price"] < 5:
+        #     return [{"a1": event}]
+        # return []
 
         dst = self.dst
         self.i += 1
@@ -30,6 +31,10 @@ class Executor:
         n = len(T)
         while i < n:
             k, conf = T[i]
+            # print("At ", conf, sep="", flush=True)
+            # print(k, i, n, sep=" ")
+            i += 1
+
             q = conf.get_state()
             for edge in dst.start_from(q):
                 if edge.predict(conf, event):
