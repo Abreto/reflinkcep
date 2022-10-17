@@ -3,13 +3,17 @@ from dataclasses import dataclass
 from typing import Callable
 
 from reflinkcep.defs import value_t
-from reflinkcep.event import Event, EventStream
+from reflinkcep.event import Event, EventAttrMap, EventStream
 
 Val = value_t
 Set = set
 DataVariable = str
 StreamVariable = str
 Func = dict
+
+Condition = dict
+DataEnv = Func[DataVariable, Val]
+Context = Func[StreamVariable, EventStream]
 
 
 class State:
@@ -33,29 +37,35 @@ class State:
         return "State({},{})".format(self.name, 0 if self.out is None else 1)
 
 
-Context = Func[StreamVariable, EventStream]
-
-
 @dataclass
 class Configuration:
     q: State
-    eta: Func
+    eta: DataEnv
     ctx: Context
 
     def get_state(self) -> State:
         return self.q
 
 
+class ConditionEvaluator:
+    def __init__(self, cndt: Condition) -> None:
+        self.obj = compile(cndt["expr"], filename="<condition>", mode="eval")
+
+    def eval(self, env: DataEnv, attrs: EventAttrMap) -> bool:
+        return eval(self.obj, {**env, **attrs, "__builtins__": None})
+
+
 @dataclass
 class Predicte:
     ev_type: str
-    cndt: dict
+    cndt: Condition
 
     def __post_init__(self):
+        self.evaluator = ConditionEvaluator(self.cndt)
         self.epsilon = self.ev_type == None
 
     def evaluate(self, conf: Configuration, event: Event) -> bool:
-        return event["name"] == 1 and event["price"] < 5
+        return self.evaluator.eval(conf.eta, event.attrs)
 
 
 class DataUpdate:

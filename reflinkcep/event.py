@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+from reflinkcep.defs import value_t
+
+EventAttrMap = dict[str, value_t]
 
 
 @dataclass(repr=False)
 class Event:
     type: str
-    attrs: dict[str, int]
+    attrs: EventAttrMap
 
     def __getitem__(self, key: str) -> int:
         return self.attrs[key]
