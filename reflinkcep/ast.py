@@ -1,7 +1,11 @@
-from dataclasses import dataclass
+from pathlib import Path
+
+import yaml
 
 AST = dict
 QueryContext = dict
+
+EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 
 
 class Query:
@@ -10,6 +14,12 @@ class Query:
     @staticmethod
     def from_dict(obj: dict):
         return Query(obj["patseq"], obj["context"], obj["raw"])
+
+    @staticmethod
+    def from_sample(name: str):
+        with open(EXAMPLE_ASTS_PATH / "{}.yml".format(name)) as f:
+            queryobj = yaml.load(f, Loader=yaml.SafeLoader)
+        return Query.from_dict(queryobj)
 
     def __init__(self, patseq: AST, context: QueryContext, raw: str = "") -> None:
         self.patseq = patseq
