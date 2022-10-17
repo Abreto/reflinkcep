@@ -14,12 +14,12 @@ def compile_spat(ast: AST) -> DST:
     P = Set([name])
     X = Set()
     Y = Set([name])
-    q0 = State(f"{name}0")
-    qf = State(f"{name}f", {name: name})
+    q0 = State(f"{name}-0")
+    qf = State(f"{name}-f", {name: name})
     Q = set([q0, qf])
     D = [Transition(q0, Predicte(ev, cndt), qf, DataUpdate(), EventStreamUpdate(name))]
 
-    return DST(S, P, X, Y, Q, q0, lambda x: 0, D)
+    return DST(S, P, X, Y, Q, q0, {}, D)
 
 
 def compile_impl(ast: AST) -> DST:

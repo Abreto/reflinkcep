@@ -1,3 +1,5 @@
+import logging
+import os
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,6 +10,10 @@ from reflinkcep.ast import Query
 from reflinkcep.compile import compile
 from reflinkcep.event import Event, EventStream
 from reflinkcep.operator import CEPOperator
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
+
 
 EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 
@@ -30,7 +36,7 @@ def echo(*args):
 
 
 class TestBasicPatternSequence(unittest.TestCase):
-    def test_naive(self):
+    def test_hello(self):
         query = load_query("00-hello")
         input = EventStream(
             EventE(n, p) for n, p in [(1, 0), (1, 5), (2, 0), (1, 2), (1, 6)]

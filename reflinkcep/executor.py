@@ -1,7 +1,11 @@
+import logging
+
 from reflinkcep.DST import DST, Configuration
 from reflinkcep.event import Event, EventStream, Stream
 
 Match = dict[str, EventStream]
+
+logger = logging.getLogger(__name__)
 
 
 class Executor:
@@ -16,10 +20,6 @@ class Executor:
         return tuple((self.i, conf))
 
     def feed(self, event: Event) -> Stream[Match]:
-        # if event["name"] == 1 and event["price"] < 5:
-        #     return [{"a1": event}]
-        # return []
-
         dst = self.dst
         self.i += 1
 
@@ -32,6 +32,7 @@ class Executor:
         while i < n:
             k, conf = T[i]
             # print("At ", conf, sep="", flush=True)
+            logger.debug("At %s", conf)
             # print(k, i, n, sep=" ")
             i += 1
 

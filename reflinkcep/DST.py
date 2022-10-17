@@ -29,6 +29,9 @@ class State:
         self.name = "{}:{}".format(name, self._get_counter())
         self.out = out
 
+    def __repr__(self) -> str:
+        return "State({},{})".format(self.name, 0 if self.out is None else 1)
+
 
 Context = Func[StreamVariable, EventStream]
 
@@ -131,4 +134,5 @@ class DST:
         return conf.get_state().out is not None
 
     def output(self, conf: Configuration) -> bool:
-        return conf.ctx  # TODO: $ctx \circ \lambda(q)$
+        qout = conf.get_state().out
+        return dict([(key, conf.ctx[var]) for key, var in qout.items()])
