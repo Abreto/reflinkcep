@@ -15,6 +15,8 @@ Condition = dict
 DataEnv = Func[DataVariable, Val]
 Context = Func[StreamVariable, EventStream]
 
+TrueCondition = {"expr": "True"}
+
 
 class State:
     _internal_counter: int = 0
@@ -62,15 +64,20 @@ class Predicte:
 
     def __post_init__(self):
         self.evaluator = ConditionEvaluator(self.cndt)
-        self.epsilon = self.ev_type == None
+        self.epsilon = self.ev_type is None
 
     def evaluate(self, conf: Configuration, event: Event) -> bool:
-        return self.evaluator.eval(conf.eta, event.attrs)
+        attrs = {} if event is None else event.attrs
+        return self.evaluator.eval(conf.eta, attrs)
 
 
 class DataUpdate:
     def update(self, eta: Func, event: Event) -> Func:
         return eta
+
+    @staticmethod
+    def Id():
+        return DataUpdate()  # TODO
 
 
 @dataclass
@@ -78,11 +85,21 @@ class EventStreamUpdate:
     sink: StreamVariable  # variable to append current event
 
     def update(self, ctx: Context, event: Event):
+        # Ignore the event
+        if self.sink is None:
+            return ctx
+        assert event is not None, "Trying to take epsilon"
+
+        # Take the event
         newctx = deepcopy(ctx)
         if not self.sink in newctx:
             newctx[self.sink] = []
         newctx[self.sink].append(event)
         return newctx
+
+    @staticmethod
+    def Id():
+        return EventStreamUpdate(None)
 
 
 @dataclass
@@ -139,6 +156,19 @@ class DST:
         if not qname in self.edge_map:
             return []
         return self.edge_map[qname]
+
+    def find_accepted(self, conf: Configuration) -> Configuration:
+        """Find accepted configuration from conf via epsilon-transition"""
+        q = conf.get_state()
+        for edge in self.start_from(q):
+            if edge.is_epsilon() and edge.predict(conf, None):
+                newconf = edge.advance(conf, None)
+                if self.accept(newconf):
+                    return newconf
+                newtry = self.find_accepted(newconf)
+                if newtry is not None:
+                    return newtry
+        return None
 
     def accept(self, conf: Configuration) -> bool:
         return conf.get_state().out is not None

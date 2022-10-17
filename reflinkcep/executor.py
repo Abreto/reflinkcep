@@ -46,6 +46,9 @@ class Executor:
                         n += 1
                     else:
                         self.S.append(new_tuple)
+                        dig = dst.find_accepted(new_conf)
+                        if dig is not None:
+                            self.S.append(self.current_tuple(dig))
 
         out = Stream()
         for k, conf in self.S:

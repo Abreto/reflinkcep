@@ -11,6 +11,15 @@ EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 def ast_repr(ast: AST) -> str:
     if ast["type"] == "spat":
         return "{}:{}:[{}]".format(ast["name"], ast["event"], ast["cndt"]["expr"])
+    elif ast["type"] == "lpat":
+        return "{}:{}:[{}]_{}{{{},{}}}".format(
+            ast["name"],
+            ast["event"],
+            ast["cndt"]["expr"],
+            "⋅",
+            ast["loop"]["from"],
+            ast["loop"]["to"],
+        )
     raise Exception("Not supported AST node {}".format(ast["type"]))
 
 
