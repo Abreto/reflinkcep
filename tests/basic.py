@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
-from reflinkcep.ast import Query
 
+from reflinkcep.ast import Query
 from reflinkcep.compile import compile
 from reflinkcep.event import Event, EventStream
 from reflinkcep.operator import CEPOperator
@@ -35,7 +35,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         input = EventStream(
             EventE(n, p) for n, p in [(1, 0), (1, 5), (2, 0), (1, 2), (1, 6)]
         )
-        operator = CEPOperator(query)
+        operator = CEPOperator.from_query(query)
         echo("query: ", query)
         echo("input: ", input)
         echo("output: ", operator << input)
