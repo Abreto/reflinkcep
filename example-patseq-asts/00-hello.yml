@@ -1,0 +1,10 @@
+type: "query"
+patseq:
+  type: "spat" # ast node type
+  name: "a1" # pattern name
+  event: "e" # event type
+  cndt:
+    expr: name == "a" and price < 1
+context:
+  schema:
+    e: ["name", "price"]
