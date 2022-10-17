@@ -1,10 +1,11 @@
 type: "query"
+raw: "a1:e:[name == 1 and price < 5]"
 patseq:
   type: "spat" # ast node type
   name: "a1" # pattern name
   event: "e" # event type
   cndt:
-    expr: name == "a" and price < 1
+    expr: name == 1 and price < 5
 context:
   schema:
     e: ["name", "price"]
