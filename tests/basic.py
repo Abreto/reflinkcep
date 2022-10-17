@@ -26,7 +26,7 @@ class TestBasicPatternSequence(unittest.TestCase):
     def test_hello(self):
         query = Query.from_sample("00-hello")
         input = EventStream(
-            EventE(n, p) for n, p in [(1, 0), (1, 5), (2, 0), (1, 2), (1, 6)]
+            EventE(n, p) for n, p in [(1, 0), (1, 5), (2, 0), (1, 2), (1, 8)]
         )
         operator = CEPOperator.from_query(query)
         echo("query: ", query)
