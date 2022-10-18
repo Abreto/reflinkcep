@@ -19,6 +19,7 @@ def EventE(name: str, price: float = 0) -> Event:
 
 
 def ese_from_list(input: list[int, int]) -> EventStream:
+    EventE.id = 0
     return EventStream(EventE(n, p) for n, p in input)
 
 
@@ -48,11 +49,20 @@ class TestBasicPatternSequence(unittest.TestCase):
             "[{'a1': [e{'id': 1, 'name': 1, 'price': 0}]}, {'a1': [e{'id': 4, 'name': 1, 'price': 2}]}]",
         )
 
-    def test_lpat1(self):
-        query = Query.from_sample("lpat1")
+    def test_lpat_nn(self):
+        query = Query.from_sample("lpat-n-n")
         input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3)])
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 8, 'name': 1, 'price': 1}, e{'id': 9, 'name': 1, 'price': 2}]}, {'al': [e{'id': 9, 'name': 1, 'price': 2}, e{'id': 10, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
+        )
+
+    def test_lpat_nm(self):
+        query = Query.from_sample("lpat-n-m")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3)])
+        output = run_query(query, input)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
         )
