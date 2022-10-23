@@ -1,5 +1,6 @@
 """Compile ast to executor"""
 
+from typing import Callable
 from reflinkcep.ast import AST, Query, Variables
 from reflinkcep.DST import (
     DST,
@@ -24,6 +25,29 @@ def get_take_dataupdate(ast: AST) -> tuple[DataUpdate, Func]:
     return X, du, eta0
 
 
+class ASTCompiler:
+    compiler_map = dict()
+
+    @classmethod
+    def register(cls, ast_type: str):
+        def wrapper(compiler: Callable[[AST], DST]):
+            cls.compiler_map[ast_type] = compiler
+            return compiler
+
+        return wrapper
+
+    @classmethod
+    def get_compiler(cls, ast_type: str):
+        if ast_type in cls.compiler_map:
+            return cls.compiler_map[ast_type]
+        raise ValueError("Not supported AST type: {}".format(ast_type))
+
+    @classmethod
+    def compile(cls, ast: AST) -> DST:
+        return cls.get_compiler(ast["type"])(ast)
+
+
+@ASTCompiler.register("spat")
 def compile_spat(ast: AST) -> DST:
     assert ast["type"] == "spat"
     name: str = ast["name"]
@@ -44,6 +68,7 @@ def compile_spat(ast: AST) -> DST:
     return DST(S, P, X, Y, Q, q0, eta0, D)
 
 
+@ASTCompiler.register("lpat")
 def compile_lpat(ast: AST) -> DST:
     assert ast["type"] == "lpat", "Wrong ast type with {}".format(ast["type"])
     name: str = ast["name"]
@@ -91,11 +116,7 @@ def compile_lpat(ast: AST) -> DST:
 
 
 def compile_impl(ast: AST) -> DST:
-    if ast["type"] == "spat":
-        # single pattern
-        return compile_spat(ast)
-    elif ast["type"] == "lpat":
-        return compile_lpat(ast)
+    return ASTCompiler.compile(ast)
 
 
 def compile(query: Query) -> Executor:
