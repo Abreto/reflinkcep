@@ -15,22 +15,32 @@ from reflinkcep.DST import (
 from reflinkcep.executor import Executor
 
 
+def get_take_dataupdate(ast: AST) -> tuple[DataUpdate, Func]:
+    variables: Variables = ast.get("variables", {})
+    X = variables.keys()
+    du = DataUpdate(dict((k, v["update"]) for k, v in variables.items()))
+    eta0 = Func((k, v["initial"]) for k, v in variables.items())
+    return X, du, eta0
+
+
 def compile_spat(ast: AST) -> DST:
     assert ast["type"] == "spat"
     name: str = ast["name"]
     ev = ast["event"]
     cndt = ast["cndt"]
 
+    X, tdu, eta0 = get_take_dataupdate(ast)
+
     S = Set([ev])
     P = Set([name])
-    X = Set()  # TODO: calculate X
+    # X = Set()
     Y = Set([name])
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     Q = set([q0, qf])
-    D = [Transition(q0, Predicte(ev, cndt), qf, DataUpdate({}), EventStreamUpdate(name))] # TODO: DataUpdate
+    D = [Transition(q0, Predicte(ev, cndt), qf, tdu, EventStreamUpdate(name))]
 
-    return DST(S, P, X, Y, Q, q0, {}, D)
+    return DST(S, P, X, Y, Q, q0, eta0, D)
 
 
 def compile_lpat(ast: AST) -> DST:
@@ -43,25 +53,23 @@ def compile_lpat(ast: AST) -> DST:
     n = loop["from"]
     m = loop["to"]
 
-    variables: Variables = ast.get("variables", {})
+    X, tdu, eta0 = get_take_dataupdate(ast)
 
     S = Set(ev)
     P = Set(name)
-    X = Set(variables.keys())  # TODO: calculate X
+    # X = Set(variables.keys())
     Y = Set(name)
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     q = [State(f"{name}-{i+1}") for i in range(m)]
     q.insert(0, q0)
     Q = Set([*q, qf])
-    eta0 = Func((var, val["initial"]) for var, val in variables.items())
     D = TransitionCollection()
 
     # take transitions
-    du = DataUpdate(dict((k, v["update"]) for k, v in variables.items()))
     esu = EventStreamUpdate(name)
     D.extend(
-        [Transition(q[i], Predicte(ev, cndt), q[i + 1], du, esu) for i in range(m)]
+        [Transition(q[i], Predicte(ev, cndt), q[i + 1], tdu, esu) for i in range(m)]
     )
 
     # proceed transitions
