@@ -1,4 +1,5 @@
-from numpy import var
+"""Compile ast to executor"""
+
 from reflinkcep.ast import AST, Query, Variables
 from reflinkcep.DST import (
     DST,

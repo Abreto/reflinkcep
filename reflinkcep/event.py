@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from reflinkcep.defs import value_t
 
 EventAttrMap = dict[str, value_t]
