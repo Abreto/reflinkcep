@@ -12,6 +12,7 @@ StreamVariable = str
 Func = dict
 
 Condition = dict
+FExp = str
 DataEnv = Func[DataVariable, Val]
 Context = Func[StreamVariable, EventStream]
 
@@ -71,13 +72,26 @@ class Predicte:
         return self.evaluator.eval(conf.eta, attrs)
 
 
+@dataclass
 class DataUpdate:
+    alpha: Func[DataVariable, FExp]
+
+    def __post_init__(self):
+        self.compiled = Func(
+            (key, compile(expr, filename="<data_update>", mode="eval"))
+            for key, expr in self.alpha.items()
+        )
+
     def update(self, eta: Func, event: Event) -> Func:
-        return eta
+        attrs = {} if event is None else event.get_attrs()
+        neweta = deepcopy(eta)
+        for var, expr in self.compiled.items():
+            neweta[var] = eval(expr, {**eta, **attrs})
+        return neweta
 
     @staticmethod
     def Id():
-        return DataUpdate()  # TODO
+        return DataUpdate({})
 
 
 @dataclass

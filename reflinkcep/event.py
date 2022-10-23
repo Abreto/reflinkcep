@@ -9,6 +9,9 @@ class Event:
     type: str
     attrs: EventAttrMap
 
+    def get_attrs(self) -> EventAttrMap:
+        return self.attrs
+
     def __getitem__(self, key: str) -> int:
         return self.attrs[key]
 

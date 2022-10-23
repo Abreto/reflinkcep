@@ -1,0 +1,18 @@
+type: "query"
+patseq:
+  type: "lpat" # ast node type
+  name: "al" # pattern name
+  event: "e" # event type
+  cndt:
+    expr: X + price <= 5
+  variables:
+    X:
+      update: X + price
+      initial: 0
+  loop:
+    contiguity: strict # relaxed, nd-relaxed
+    from: 2
+    to: 3 # inf
+context:
+  schema:
+    e: ["name", "price"]

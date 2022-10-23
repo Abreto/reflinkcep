@@ -1,8 +1,10 @@
-from reflinkcep.ast import AST, Query
+from numpy import var
+from reflinkcep.ast import AST, Query, Variables
 from reflinkcep.DST import (
     DST,
     DataUpdate,
     EventStreamUpdate,
+    Func,
     Predicte,
     Set,
     State,
@@ -26,7 +28,7 @@ def compile_spat(ast: AST) -> DST:
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     Q = set([q0, qf])
-    D = [Transition(q0, Predicte(ev, cndt), qf, DataUpdate(), EventStreamUpdate(name))]
+    D = [Transition(q0, Predicte(ev, cndt), qf, DataUpdate({}), EventStreamUpdate(name))] # TODO: DataUpdate
 
     return DST(S, P, X, Y, Q, q0, {}, D)
 
@@ -41,24 +43,25 @@ def compile_lpat(ast: AST) -> DST:
     n = loop["from"]
     m = loop["to"]
 
+    variables: Variables = ast.get("variables", {})
+
     S = Set(ev)
     P = Set(name)
-    X = Set()  # TODO: calculate X
+    X = Set(variables.keys())  # TODO: calculate X
     Y = Set(name)
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     q = [State(f"{name}-{i+1}") for i in range(m)]
     q.insert(0, q0)
     Q = Set([*q, qf])
+    eta0 = Func((var, val["initial"]) for var, val in variables.items())
     D = TransitionCollection()
 
     # take transitions
+    du = DataUpdate(dict((k, v["update"]) for k, v in variables.items()))
     esu = EventStreamUpdate(name)
     D.extend(
-        [
-            Transition(q[i], Predicte(ev, cndt), q[i + 1], DataUpdate(), esu)
-            for i in range(m)
-        ]
+        [Transition(q[i], Predicte(ev, cndt), q[i + 1], du, esu) for i in range(m)]
     )
 
     # proceed transitions
@@ -75,7 +78,7 @@ def compile_lpat(ast: AST) -> DST:
         ]
     )
 
-    return DST(S, P, X, Y, Q, q0, {}, D)
+    return DST(S, P, X, Y, Q, q0, eta0, D)
 
 
 def compile_impl(ast: AST) -> DST:

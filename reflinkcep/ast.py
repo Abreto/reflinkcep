@@ -3,6 +3,8 @@ from pathlib import Path
 import yaml
 
 AST = dict
+VariableDescribe = dict
+Variables = dict[str, VariableDescribe]
 QueryContext = dict
 
 EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
@@ -12,6 +14,7 @@ def ast_repr(ast: AST) -> str:
     if ast["type"] == "spat":
         return "{}:{}:[{}]".format(ast["name"], ast["event"], ast["cndt"]["expr"])
     elif ast["type"] == "lpat":
+        # TODO: how to reprenset iterative condition?
         return "{}:{}:[{}]_{}{{{},{}}}".format(
             ast["name"],
             ast["event"],
