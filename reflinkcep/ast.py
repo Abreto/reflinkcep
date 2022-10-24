@@ -10,6 +10,7 @@ QueryContext = dict
 EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 
 
+CONTIGUITY_REPR_MAP={"strict": "⋅", "nd-relaxed": "⊙"}
 def ast_repr(ast: AST) -> str:
     if ast["type"] == "spat":
         return "{}:{}:[{}]".format(ast["name"], ast["event"], ast["cndt"]["expr"])
@@ -19,7 +20,7 @@ def ast_repr(ast: AST) -> str:
             ast["name"],
             ast["event"],
             ast["cndt"]["expr"],
-            "⋅",
+            CONTIGUITY_REPR_MAP[ast["loop"]["contiguity"]],
             ast["loop"]["from"],
             ast["loop"]["to"],
         )

@@ -45,9 +45,13 @@ class Configuration:
     q: State
     eta: DataEnv
     ctx: Context
+    last_take: bool = False
 
     def get_state(self) -> State:
         return self.q
+
+    def is_last_take(self) -> bool:
+        return self.last_take
 
 
 class ConditionEvaluator:
@@ -62,12 +66,20 @@ class ConditionEvaluator:
 class Predicte:
     ev_type: str
     cndt: Condition
+    ANY_TYPE = "*"
 
     def __post_init__(self):
         self.evaluator = ConditionEvaluator(self.cndt)
         self.epsilon = self.ev_type is None
 
     def evaluate(self, conf: Configuration, event: Event) -> bool:
+        if (
+            event is not None
+            and self.ev_type != self.ANY_TYPE
+            and self.ev_type != event.type
+        ):
+            return False
+
         attrs = {} if event is None else event.attrs
         return self.evaluator.eval(conf.eta, attrs)
 
@@ -111,6 +123,9 @@ class EventStreamUpdate:
         newctx[self.sink].append(event)
         return newctx
 
+    def is_id(self):
+        return self.sink is None
+
     @staticmethod
     def Id():
         return EventStreamUpdate(None)
@@ -130,14 +145,19 @@ class Transition:
 
     def advance(self, conf: Configuration, event: Event) -> Configuration:
         """Calculate next configuration"""
+        is_last_take = conf.last_take if self.is_epsilon() else self.is_take()
         return Configuration(
             self.q2,
             self.alpha.update(conf.eta, event),
             self.beta.update(conf.ctx, event),
+            is_last_take,
         )
 
     def is_epsilon(self) -> bool:
         return self.p.epsilon
+
+    def is_take(self) -> bool:
+        return not self.beta.is_id()
 
 
 TransitionCollection = list
@@ -185,6 +205,10 @@ class DST:
         return None
 
     def accept(self, conf: Configuration) -> bool:
+        # ignore-last configuration cannot be accept
+        # accepted configuration's last non-epsilon transition must be TAKE
+        if not conf.is_last_take():
+            return False
         return conf.get_state().out is not None
 
     def output(self, conf: Configuration) -> bool:

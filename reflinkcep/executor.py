@@ -54,5 +54,7 @@ class Executor:
         for k, conf in self.S:
             if dst.accept(conf):
                 out.append(dst.output(conf))
+                logger.debug("accept %s", conf)
             # TODO: after-match strategy
+        logger.debug("total out: %s", out)
         return out

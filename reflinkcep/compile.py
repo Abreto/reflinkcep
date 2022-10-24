@@ -112,6 +112,26 @@ def compile_lpat(ast: AST) -> DST:
         ]
     )
 
+    # ignore transitions
+    def compute_ignore_transitions():
+        if theta == "strict":
+            return []
+        if theta == "relaxed":
+            return []  # TODO: global Sigma
+        assert theta == "nd-relaxed", "Incorrect theta: {}".format(theta)
+        return [
+            Transition(
+                q[i],
+                Predicte(Predicte.ANY_TYPE, TrueCondition),
+                q[i],
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+            for i in range(1, m)
+        ]
+
+    D.extend(compute_ignore_transitions())
+
     return DST(S, P, X, Y, Q, q0, eta0, D)
 
 

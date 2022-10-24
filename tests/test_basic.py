@@ -74,6 +74,15 @@ class TestBasicPatternSequence(unittest.TestCase):
             "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
         )
 
+    def test_lpat_nm_ndrelaxed(self):
+        query = Query.from_sample("lpat-n-m-ndrelaxed")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2)])
+        output = run_query(query, input)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}]",
+        )
+
     def test_itercndt_lap(self):
         query = Query.from_sample("lpat-n-m-ic")
         input = ese_from_list([(1, 1), (1, 4), (1, 1), (1, 2), (1, 3)])
