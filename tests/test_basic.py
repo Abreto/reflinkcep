@@ -41,6 +41,7 @@ def run_query(query: Query, input: EventStream, with_raw=False) -> str:
     logger.info("query: %s", query)
     logger.info("input: %s", input)
     logger.info("output: %s", output)
+    logger.info("fancy output:\n%s", "\n".join(str(x) for x in output))
     if with_raw:
         return str(output), output
     return str(output)
