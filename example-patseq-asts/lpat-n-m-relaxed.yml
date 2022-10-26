@@ -1,0 +1,15 @@
+type: "query"
+patseq:
+  type: "lpat" # ast node type
+  name: "al" # pattern name
+  event: "e" # event type
+  cndt:
+    expr: name == 1
+    # TODO: introduce cur_i ?
+  loop:
+    contiguity: relaxed # strict, nd-relaxed
+    from: 2
+    to: 3 # inf
+context:
+  schema:
+    e: ["id", "name", "price"]

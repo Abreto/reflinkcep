@@ -1,7 +1,7 @@
 from reflinkcep.ast import Query
 from reflinkcep.compile import compile
 from reflinkcep.event import Event, EventStream, Stream
-from reflinkcep.executor import Executor, Match
+from reflinkcep.executor import Executor, Match, MatchStream
 
 
 class CEPOperator:

@@ -72,6 +72,10 @@ class Predicte:
         self.evaluator = ConditionEvaluator(self.cndt)
         self.epsilon = self.ev_type is None
 
+    def neg(self):
+        """Return !(cndt)"""
+        return Predicte(self.ev_type, {"expr": f"not ({self.cndt['expr']})"})
+
     def evaluate(self, conf: Configuration, event: Event) -> bool:
         if (
             event is not None

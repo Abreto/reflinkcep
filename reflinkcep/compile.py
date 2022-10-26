@@ -1,7 +1,7 @@
 """Compile ast to executor"""
 
 from typing import Callable
-from reflinkcep.ast import AST, Query, Variables
+from reflinkcep.ast import AST, Query, QueryContext, Variables
 from reflinkcep.DST import (
     DST,
     DataUpdate,
@@ -17,9 +17,9 @@ from reflinkcep.DST import (
 from reflinkcep.executor import Executor
 
 
-def get_take_dataupdate(ast: AST) -> tuple[DataUpdate, Func]:
+def get_take_dataupdate(ast: AST) -> tuple[Set, DataUpdate, Func]:
     variables: Variables = ast.get("variables", {})
-    X = variables.keys()
+    X = Set(variables.keys())
     du = DataUpdate(dict((k, v["update"]) for k, v in variables.items()))
     eta0 = Func((k, v["initial"]) for k, v in variables.items())
     return X, du, eta0
@@ -43,12 +43,12 @@ class ASTCompiler:
         raise ValueError("Not supported AST type: {}".format(ast_type))
 
     @classmethod
-    def compile(cls, ast: AST) -> DST:
-        return cls.get_compiler(ast["type"])(ast)
+    def compile(cls, ast: AST, ctx: QueryContext) -> DST:
+        return cls.get_compiler(ast["type"])(ast, ctx)
 
 
 @ASTCompiler.register("spat")
-def compile_spat(ast: AST) -> DST:
+def compile_spat(ast: AST, ctx: QueryContext = None) -> DST:
     assert ast["type"] == "spat"
     name: str = ast["name"]
     ev = ast["event"]
@@ -69,7 +69,7 @@ def compile_spat(ast: AST) -> DST:
 
 
 @ASTCompiler.register("lpat")
-def compile_lpat(ast: AST) -> DST:
+def compile_lpat(ast: AST, ctx: QueryContext = None) -> DST:
     assert ast["type"] == "lpat", "Wrong ast type with {}".format(ast["type"])
     name: str = ast["name"]
     ev = ast["event"]
@@ -117,7 +117,12 @@ def compile_lpat(ast: AST) -> DST:
         if theta == "strict":
             return []
         if theta == "relaxed":
-            return []  # TODO: global Sigma
+            total_evtypes = ctx["schema"].keys()
+            ret = [Transition(q[i], Predicte(ev, cndt).neg(), q[i], DataUpdate.Id(), EventStreamUpdate.Id()) for i in range(1, m)]
+            for e in total_evtypes:
+                if e != ev:
+                    ret.extend([Transition(q[i], Predicte(e, TrueCondition), q[i], DataUpdate.Id(), EventStreamUpdate.Id()) for i in range(1, m)])
+            return ret
         assert theta == "nd-relaxed", "Incorrect theta: {}".format(theta)
         return [
             Transition(
@@ -135,10 +140,10 @@ def compile_lpat(ast: AST) -> DST:
     return DST(S, P, X, Y, Q, q0, eta0, D)
 
 
-def compile_impl(ast: AST) -> DST:
-    return ASTCompiler.compile(ast)
+def compile_impl(ast: AST, ctx: QueryContext) -> DST:
+    return ASTCompiler.compile(ast, ctx)
 
 
 def compile(query: Query) -> Executor:
-    dst = compile_impl(query.patseq)
+    dst = compile_impl(query.patseq, query.context)
     return Executor(dst)

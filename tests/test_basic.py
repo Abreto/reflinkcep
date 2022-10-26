@@ -1,24 +1,26 @@
 import logging
 import os
+from typing import Union
 import unittest
 
 from reflinkcep.ast import Query
 from reflinkcep.compile import compile
 from reflinkcep.event import Event, EventStream
+from reflinkcep.executor import MatchStream
 from reflinkcep.operator import CEPOperator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
 
-def EventE(name: str, price: float = 0) -> Event:
+def EventE(name: int, price: int = 0) -> Event:
     if not hasattr(EventE, "id"):
         EventE.id = 0
     EventE.id += 1
     return Event("e", {"id": EventE.id, "name": name, "price": price})
 
 
-def ese_from_list(input: list[int, int]) -> EventStream:
+def ese_from_list(input: list[tuple[int, int]]) -> EventStream:
     EventE.id = 0
     return EventStream(EventE(n, p) for n, p in input)
 
@@ -27,13 +29,15 @@ def echo(*args):
     print(*args, sep="")
 
 
-def run_query_raw(query: Query, input: EventStream) -> EventStream:
+def run_query_raw(query: Query, input: EventStream) -> MatchStream:
     operator = CEPOperator.from_query(query)
     output = operator << input
     return output
 
 
-def run_query(query: Query, input: EventStream, with_raw=False) -> str:
+def run_query(
+    query: Query, input: EventStream, with_raw=False
+) -> Union[str, tuple[str, MatchStream]]:
     output = run_query_raw(query, input)
     # echo("query: ", query)
     # echo("input: ", input)
@@ -73,6 +77,15 @@ class TestBasicPatternSequence(unittest.TestCase):
         self.assertEqual(
             output,
             "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
+        )
+
+    def test_lpat_nm_relaxed(self):
+        query = Query.from_sample("lpat-n-m-relaxed")
+        input = ese_from_list([(1, 0), (1, 5), (2, 1), (1, 2)])
+        output = run_query(query, input)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 2, 'name': 1, 'price': 5}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 2, 'name': 1, 'price': 5}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 2, 'name': 1, 'price': 5}, e{'id': 4, 'name': 1, 'price': 2}]}]",
         )
 
     def test_lpat_nm_ndrelaxed(self):

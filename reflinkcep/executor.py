@@ -4,6 +4,7 @@ from reflinkcep.DST import DST, Configuration
 from reflinkcep.event import Event, EventStream, Stream
 
 Match = dict[str, EventStream]
+MatchStream = Stream[Match]
 
 logger = logging.getLogger(__name__)
 
