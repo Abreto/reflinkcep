@@ -110,3 +110,36 @@ class TestBasicPatternSequence(unittest.TestCase):
             output,
             "[{'al': [e{'id': 1, 'name': 1, 'price': 1}, e{'id': 2, 'name': 1, 'price': 4}]}, {'al': [e{'id': 2, 'name': 1, 'price': 4}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
         )
+
+    def test_lpat_n_inf(self):
+        query = Query.from_sample("lpat-n-inf")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 2)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+        )
+
+    def test_lpat_n_inf_relaxed(self):
+        query = Query.from_sample("lpat-n-inf-relaxed")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 2)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+        )
+
+    def test_lpat_n_inf_ndrelaxed(self):
+        query = Query.from_sample("lpat-n-inf-ndrelaxed")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 3)
+        self.assertEqual(
+            output,
+            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+        )

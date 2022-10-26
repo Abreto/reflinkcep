@@ -10,7 +10,9 @@ QueryContext = dict
 EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 
 
-CONTIGUITY_REPR_MAP={"strict": "⋅", "nd-relaxed": "⊙"}
+CONTIGUITY_REPR_MAP = {"strict": "⋅", "nd-relaxed": "⊙"}
+
+
 def ast_repr(ast: AST) -> str:
     if ast["type"] == "spat":
         return "{}:{}:[{}]".format(ast["name"], ast["event"], ast["cndt"]["expr"])
@@ -24,7 +26,17 @@ def ast_repr(ast: AST) -> str:
             ast["loop"]["from"],
             ast["loop"]["to"],
         )
-    raise Exception("Not supported AST node {}".format(ast["type"]))
+    elif ast["type"] == "lpat-inf":
+        # TODO: how to reprenset iterative condition?
+        return "{}:{}:[{}]_{}{{{},{}}}".format(
+            ast["name"],
+            ast["event"],
+            ast["cndt"]["expr"],
+            CONTIGUITY_REPR_MAP[ast["loop"]["contiguity"]],
+            ast["loop"]["from"],
+            "inf",
+        )
+    raise ValueError("Not supported AST node {}".format(ast["type"]))
 
 
 class Query:

@@ -211,6 +211,7 @@ class DST:
     def accept(self, conf: Configuration) -> bool:
         # ignore-last configuration cannot be accept
         # accepted configuration's last non-epsilon transition must be TAKE
+        # TODO: or add dummy states for ignore to transiste in and only advance in take transistion
         if not conf.is_last_take():
             return False
         return conf.get_state().out is not None

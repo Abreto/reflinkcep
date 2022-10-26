@@ -30,7 +30,7 @@ class ASTCompiler:
 
     @classmethod
     def register(cls, ast_type: str):
-        def wrapper(compiler: Callable[[AST], DST]):
+        def wrapper(compiler: Callable[[AST, QueryContext], DST]):
             cls.compiler_map[ast_type] = compiler
             return compiler
 
@@ -69,7 +69,7 @@ def compile_spat(ast: AST, ctx: QueryContext = None) -> DST:
 
 
 @ASTCompiler.register("lpat")
-def compile_lpat(ast: AST, ctx: QueryContext = None) -> DST:
+def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
     assert ast["type"] == "lpat", "Wrong ast type with {}".format(ast["type"])
     name: str = ast["name"]
     ev = ast["event"]
@@ -118,10 +118,30 @@ def compile_lpat(ast: AST, ctx: QueryContext = None) -> DST:
             return []
         if theta == "relaxed":
             total_evtypes = ctx["schema"].keys()
-            ret = [Transition(q[i], Predicte(ev, cndt).neg(), q[i], DataUpdate.Id(), EventStreamUpdate.Id()) for i in range(1, m)]
+            ret = [
+                Transition(
+                    q[i],
+                    Predicte(ev, cndt).neg(),
+                    q[i],
+                    DataUpdate.Id(),
+                    EventStreamUpdate.Id(),
+                )
+                for i in range(1, m)
+            ]
             for e in total_evtypes:
                 if e != ev:
-                    ret.extend([Transition(q[i], Predicte(e, TrueCondition), q[i], DataUpdate.Id(), EventStreamUpdate.Id()) for i in range(1, m)])
+                    ret.extend(
+                        [
+                            Transition(
+                                q[i],
+                                Predicte(e, TrueCondition),
+                                q[i],
+                                DataUpdate.Id(),
+                                EventStreamUpdate.Id(),
+                            )
+                            for i in range(1, m)
+                        ]
+                    )
             return ret
         assert theta == "nd-relaxed", "Incorrect theta: {}".format(theta)
         return [
@@ -134,6 +154,144 @@ def compile_lpat(ast: AST, ctx: QueryContext = None) -> DST:
             )
             for i in range(1, m)
         ]
+
+    D.extend(compute_ignore_transitions())
+
+    return DST(S, P, X, Y, Q, q0, eta0, D)
+
+
+@ASTCompiler.register("lpat-inf")
+def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
+    name: str = ast["name"]
+    ev = ast["event"]
+    cndt = ast["cndt"]
+    loop = ast["loop"]
+    theta = loop["contiguity"]
+    n = loop["from"]
+
+    X, tdu, eta0 = get_take_dataupdate(ast)
+
+    S = Set(ev)
+    P = Set(name)
+    # X = Set(variables.keys())
+    Y = Set(name)
+    q0 = State(f"{name}-0")
+    qf = State(f"{name}-f", {name: name})
+    q = [State(f"{name}-{i+1}") for i in range(n)]
+    qnp = State(f"{name}-np")
+    q.insert(0, q0)
+    Q = Set([*q, qnp, qf])
+    D = TransitionCollection()
+
+    # take transitions
+    esu = EventStreamUpdate(name)
+    D.extend(
+        [Transition(q[i], Predicte(ev, cndt), q[i + 1], tdu, esu) for i in range(n)]
+    )
+    D.extend(
+        [
+            Transition(q[n], Predicte(ev, cndt), q[n], tdu, esu),
+            Transition(qnp, Predicte(ev, cndt), q[n], tdu, esu),
+        ]
+    )
+
+    # proceed transitions
+    D.append(
+        Transition(
+            q[n],
+            Predicte(None, TrueCondition),
+            qf,
+            DataUpdate.Id(),
+            EventStreamUpdate.Id(),
+        )
+    )
+
+    # ignore transitions
+    def compute_ignore_transitions():
+        if theta == "strict":
+            return []
+        if theta == "relaxed":
+            total_evtypes = ctx["schema"].keys()
+            negpred = Predicte(ev, cndt).neg()
+            ret = [
+                Transition(
+                    q[i],
+                    Predicte(ev, cndt).neg(),
+                    q[i],
+                    DataUpdate.Id(),
+                    EventStreamUpdate.Id(),
+                )
+                for i in range(1, n)
+            ]
+            for e in total_evtypes:
+                if e != ev:
+                    ret.extend(
+                        [
+                            Transition(
+                                q[i],
+                                Predicte(e, TrueCondition),
+                                q[i],
+                                DataUpdate.Id(),
+                                EventStreamUpdate.Id(),
+                            )
+                            for i in range(1, n)
+                        ]
+                    )
+            ret.extend(
+                [
+                    Transition(
+                        q[n], negpred, qnp, DataUpdate.Id(), EventStreamUpdate.Id()
+                    ),
+                    Transition(
+                        qnp, negpred, qnp, DataUpdate.Id(), EventStreamUpdate.Id()
+                    ),
+                    Transition(
+                        q[n],
+                        Predicte(Predicte.ANY_TYPE, TrueCondition),
+                        qnp,
+                        DataUpdate.Id(),
+                        EventStreamUpdate.Id(),
+                    ),
+                    Transition(
+                        qnp,
+                        Predicte(Predicte.ANY_TYPE, TrueCondition),
+                        qnp,
+                        DataUpdate.Id(),
+                        EventStreamUpdate.Id(),
+                    ),
+                ]
+            )
+            return ret
+        assert theta == "nd-relaxed", "Incorrect theta: {}".format(theta)
+        ret = [
+            Transition(
+                q[i],
+                Predicte(Predicte.ANY_TYPE, TrueCondition),
+                q[i],
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+            for i in range(1, n)
+        ]
+        ret.extend(
+            [
+                Transition(
+                    q[n],
+                    Predicte(Predicte.ANY_TYPE, TrueCondition),
+                    qnp,
+                    DataUpdate.Id(),
+                    EventStreamUpdate.Id(),
+                ),
+                Transition(
+                    qnp,
+                    Predicte(Predicte.ANY_TYPE, TrueCondition),
+                    qnp,
+                    DataUpdate.Id(),
+                    EventStreamUpdate.Id(),
+                ),
+            ]
+        )
+        return ret
 
     D.extend(compute_ignore_transitions())
 

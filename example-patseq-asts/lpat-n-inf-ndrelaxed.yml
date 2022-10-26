@@ -1,0 +1,14 @@
+type: "query"
+patseq:
+  type: "lpat-inf" # ast node type
+  name: "al" # pattern name
+  event: "e" # event type
+  cndt:
+    expr: name == 1 and price < 4
+  loop:
+    contiguity: nd-relaxed # relaxed, nd-relaxed
+    from: 3
+    to: inf # not neccessary
+context:
+  schema:
+    e: ["name", "price"]
