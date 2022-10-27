@@ -6,7 +6,7 @@ patseq:
   cndt:
     expr: name == 1 and price < 4
   loop:
-    contiguity: strict # relaxed, nd-relaxed
+    contiguity: nd-relaxed # relaxed, nd-relaxed
     from: 2
     to: inf # not neccessary
   until:

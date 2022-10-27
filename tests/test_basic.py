@@ -46,7 +46,9 @@ def run_query(
     logger.info("query: %s", query)
     logger.info("input: %s", input)
     logger.info("output: %s", output)
-    logger.info("fancy output:\n%s", "\n".join(str(x) for x in output))
+    logger.info(
+        "fancy output: %d matches\n%s", len(output), "\n".join(str(x) for x in output)
+    )
     if with_raw:
         return str(output), output
     return str(output)
@@ -167,4 +169,16 @@ class TestBasicPatternSequence(unittest.TestCase):
         self.assertEqual(
             output,
             "[{'al': [e(1,1,0), e(3,1,1)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
+        )
+
+    def test_lpat_n_inf_until_ndrelaxed(self):
+        query = Query.from_sample("lpat-n-inf-until-ndrelaxed")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 2)
+            self.assertLess(sum([e["price"] for e in match["al"]]), 6)
+        self.assertEqual(
+            output,
+            "[{'al': [e(1,1,0), e(3,1,1)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(1,1,0), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(1,1,0), e(3,1,1), e(5,1,3)]}, {'al': [e(1,1,0), e(4,1,2), e(5,1,3)]}, {'al': [e(1,1,0), e(5,1,3)]}, {'al': [e(3,1,1), e(5,1,3)]}, {'al': [e(4,1,2), e(5,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(6,1,3)]}, {'al': [e(1,1,0), e(4,1,2), e(6,1,3)]}, {'al': [e(1,1,0), e(6,1,3)]}, {'al': [e(3,1,1), e(6,1,3)]}, {'al': [e(4,1,2), e(6,1,3)]}]",
         )
