@@ -1,0 +1,26 @@
+type: "Query"
+patseq:
+  type: "combine"
+  contiguity: "nd-relaxed"
+  left:
+    type: "lpat-inf"
+    name: "a"
+    event: "e"
+    cndt:
+      expr: name == 1
+    loop:
+      contiguity: nd-relaxed
+      from: 1
+  right:
+    type: "lpat"
+    name: "b"
+    event: "e"
+    cndt:
+      expr: name == 2
+    loop:
+      contiguity: relaxed
+      from: 1
+      to: 3
+context:
+  schema:
+    e: ["id", "name", "price"]

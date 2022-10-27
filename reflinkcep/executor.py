@@ -58,7 +58,7 @@ class Executor:
                             logger.debug("found accepted %s", dig)
 
         out = Stream()
-        for k, conf in self.S:
+        for k, conf in self.S:  # TODO: sorted self.S
             if dst.accept(conf):
                 out.append(dst.output(conf))
                 logger.debug("accept %s", conf)

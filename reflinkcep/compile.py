@@ -346,6 +346,39 @@ def compile_combine(ast: AST, ctx: QueryContext) -> DST:
         )
         q.clear_output()
 
+    if contiguity == "relaxed":
+        right_ast = ast["right"]
+        D.append(
+            Transition(
+                q02,
+                Predicte(right_ast["event"], right_ast["cndt"]).neg(),
+                q02,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
+        for e in ctx["schema"].keys():
+            if e != right_ast["event"]:
+                D.append(
+                    Transition(
+                        q02,
+                        Predicte(e, TrueCondition),
+                        q02,
+                        DataUpdate.Id(),
+                        EventStreamUpdate.Id(),
+                    )
+                )
+    elif contiguity == "nd-relaxed":
+        D.append(
+            Transition(
+                q02,
+                Predicte(Predicte.ANY_TYPE, TrueCondition),
+                q02,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
+
     return DST(S, P, X, Y, Q, q01, eta0, D)
 
 
