@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Iterable
 
 from reflinkcep.defs import value_t
 from reflinkcep.event import Event, EventAttrMap, EventStream
@@ -19,6 +19,13 @@ Context = Func[StreamVariable, EventStream]
 TrueCondition = {"expr": "True"}
 
 
+def func_merge(f1: Func, f2: Func | None) -> Func:
+    f = deepcopy(f1)
+    if f2 is not None:
+        f.update(f2)
+    return f
+
+
 class State:
     _internal_counter: int = 0
 
@@ -35,6 +42,13 @@ class State:
     def __init__(self, name: str, out: Func[str, str] = None) -> None:
         self.name = "{}:{}".format(name, self._get_counter())
         self.out = out
+
+    def extend_output(self, out: Func[str, str]) -> None:
+        assert out is not None, "out to extend is None"
+        self.out = func_merge(out, self.out)
+
+    def clear_output(self) -> None:
+        self.out = None
 
     def __repr__(self) -> str:
         return "State({},{})".format(self.name, 0 if self.out is None else 1)
@@ -85,6 +99,7 @@ class Predicte:
     def evaluate(self, conf: Configuration, event: Event) -> bool:
         if (
             event is not None
+            and self.ev_type != None
             and self.ev_type != self.ANY_TYPE
             and self.ev_type != event.type
         ):
@@ -179,6 +194,12 @@ class Transition:
 TransitionCollection = list
 
 
+def transitions_union(
+    t1: TransitionCollection[Transition], t2: TransitionCollection[Transition]
+) -> TransitionCollection[Transition]:
+    return t1 + t2  # TODO: should we use deepcopy?
+
+
 @dataclass
 class DST:
     Sigma: Set[str]
@@ -197,6 +218,11 @@ class DST:
             if not q1 in self.edge_map:
                 self.edge_map[q1] = []
             self.edge_map[q1].append(edge)
+
+    def final_states(self) -> Iterable[State]:
+        for state in self.Q:
+            if state.out is not None:
+                yield state
 
     def initial_configuration(self) -> Configuration:
         return Configuration(self.q0, self.eta, {})

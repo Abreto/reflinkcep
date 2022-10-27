@@ -38,6 +38,8 @@ def ast_repr(ast: AST) -> str:
             "inf",
             until_suffix,
         )
+    elif ast["type"] == "combine":
+        return "{}{}{}".format(ast_repr(ast["left"]), CONTIGUITY_REPR_MAP[ast["contiguity"]], ast_repr(ast["right"]))
     raise ValueError("Not supported AST node {}".format(ast["type"]))
 
 

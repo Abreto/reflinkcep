@@ -13,6 +13,8 @@ from reflinkcep.DST import (
     Transition,
     TransitionCollection,
     TrueCondition,
+    func_merge,
+    transitions_union,
 )
 from reflinkcep.executor import Executor
 
@@ -81,10 +83,10 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
 
     X, tdu, eta0 = get_take_dataupdate(ast)
 
-    S = Set(ev)
-    P = Set(name)
+    S = Set([ev])
+    P = Set([name])
     # X = Set(variables.keys())
-    Y = Set(name)
+    Y = Set([name])
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     q = [State(f"{name}-{i+1}") for i in range(m)]
@@ -309,6 +311,42 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
                 trans.update_predict(trans.get_predict().with_until(cndtp))
 
     return DST(S, P, X, Y, Q, q0, eta0, D)
+
+
+@ASTCompiler.register("combine")
+def compile_combine(ast: AST, ctx: QueryContext) -> DST:
+    contiguity: str = ast["contiguity"]
+    left = ASTCompiler.compile(ast["left"], ctx)
+    right = ASTCompiler.compile(ast["right"], ctx)
+
+    S = left.Sigma.union(right.Sigma)
+    P = left.Pi.union(right.Pi)
+    X = left.X.union(right.X)
+    Y = left.Y.union(right.Y)
+    # TODO: Q?, with output
+    Q = left.Q.union(right.Q)
+    q01 = left.q0
+    eta0 = func_merge(left.eta, right.eta)  # suupose X1 /\ X2 = {}
+    D: TransitionCollection[Transition] = transitions_union(left.Delta, right.Delta)
+
+    for q in left.final_states():
+        for q2 in right.final_states():
+            q2.extend_output(q.out)
+
+    q02 = right.q0
+    for q in left.final_states():
+        D.append(
+            Transition(
+                q,
+                Predicte(None, TrueCondition),
+                q02,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
+        q.clear_output()
+
+    return DST(S, P, X, Y, Q, q01, eta0, D)
 
 
 def compile_impl(ast: AST, ctx: QueryContext) -> DST:

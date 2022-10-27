@@ -40,8 +40,10 @@ class Executor:
 
             q = conf.get_state()
             for edge in dst.start_from(q):
+                logger.debug("trying edge %s", edge)
                 if edge.predict(conf, event):
                     new_conf = edge.advance(conf, event)
+                    logger.debug("now go ahead %s", new_conf)
                     new_tuple = self.current_tuple(new_conf)
                     if edge.is_epsilon():
                         T.append(new_tuple)
