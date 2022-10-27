@@ -21,6 +21,7 @@ class Executor:
         return tuple((self.i, conf))
 
     def feed(self, event: Event) -> Stream[Match]:
+        logger.debug("Feed with %s", event)
         dst = self.dst
         self.i += 1
 
@@ -44,12 +45,15 @@ class Executor:
                     new_tuple = self.current_tuple(new_conf)
                     if edge.is_epsilon():
                         T.append(new_tuple)
+                        logger.debug("epsilon to %s with %s", new_tuple, edge)
                         n += 1
                     else:
                         self.S.append(new_tuple)
+                        logger.debug("consume to %s with %s", new_tuple, edge)
                         dig = dst.find_accepted(new_conf)
                         if dig is not None:
                             self.S.append(self.current_tuple(dig))
+                            logger.debug("found accepted %s", dig)
 
         out = Stream()
         for k, conf in self.S:

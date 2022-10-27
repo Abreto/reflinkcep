@@ -17,7 +17,9 @@ class Event:
         return self.attrs[key]
 
     def __repr__(self) -> str:
-        return "{}{}".format(self.type, self.attrs)
+        return "{}({})".format(
+            self.type, ",".join(str(v) for _, v in self.attrs.items())
+        )
 
 
 Stream = list

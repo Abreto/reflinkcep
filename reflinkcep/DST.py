@@ -76,6 +76,12 @@ class Predicte:
         """Return !(cndt)"""
         return Predicte(self.ev_type, {"expr": f"not ({self.cndt['expr']})"})
 
+    def with_until(self, cndtp: Condition) -> "Predicte":
+        return Predicte(
+            self.ev_type,
+            {"expr": f"({self.cndt['expr']}) and (not ({cndtp['expr']}))"},
+        )
+
     def evaluate(self, conf: Configuration, event: Event) -> bool:
         if (
             event is not None
@@ -142,6 +148,12 @@ class Transition:
     q2: State
     alpha: DataUpdate
     beta: EventStreamUpdate
+
+    def get_predict(self) -> Predicte:
+        return self.p
+
+    def update_predict(self, newpred: Predicte) -> None:
+        self.p = newpred
 
     def predict(self, conf: Configuration, event: Event) -> bool:
         """If this edge can go with (conf, event)"""

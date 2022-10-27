@@ -10,7 +10,7 @@ QueryContext = dict
 EXAMPLE_ASTS_PATH = Path(__file__).parent.parent / "example-patseq-asts"
 
 
-CONTIGUITY_REPR_MAP = {"strict": "⋅", "nd-relaxed": "⊙"}
+CONTIGUITY_REPR_MAP = {"strict": "⋅", "relaxed": "∘", "nd-relaxed": "⊙"}
 
 
 def ast_repr(ast: AST) -> str:
@@ -28,13 +28,15 @@ def ast_repr(ast: AST) -> str:
         )
     elif ast["type"] == "lpat-inf":
         # TODO: how to reprenset iterative condition?
-        return "{}:{}:[{}]_{}{{{},{}}}".format(
+        until_suffix = "U({})".format(ast["until"]["expr"]) if "until" in ast else ""
+        return "{}:{}:[{}]_{}{{{},{}}}{}".format(
             ast["name"],
             ast["event"],
             ast["cndt"]["expr"],
             CONTIGUITY_REPR_MAP[ast["loop"]["contiguity"]],
             ast["loop"]["from"],
             "inf",
+            until_suffix,
         )
     raise ValueError("Not supported AST node {}".format(ast["type"]))
 

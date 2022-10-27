@@ -181,7 +181,7 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
     qnp = State(f"{name}-np")
     q.insert(0, q0)
     Q = Set([*q, qnp, qf])
-    D = TransitionCollection()
+    D: TransitionCollection[Transition] = TransitionCollection()
 
     # take transitions
     esu = EventStreamUpdate(name)
@@ -245,22 +245,28 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
                     Transition(
                         qnp, negpred, qnp, DataUpdate.Id(), EventStreamUpdate.Id()
                     ),
-                    Transition(
-                        q[n],
-                        Predicte(Predicte.ANY_TYPE, TrueCondition),
-                        qnp,
-                        DataUpdate.Id(),
-                        EventStreamUpdate.Id(),
-                    ),
-                    Transition(
-                        qnp,
-                        Predicte(Predicte.ANY_TYPE, TrueCondition),
-                        qnp,
-                        DataUpdate.Id(),
-                        EventStreamUpdate.Id(),
-                    ),
                 ]
             )
+            for e in total_evtypes:
+                if e != ev:
+                    ret.extend(
+                        [
+                            Transition(
+                                q[n],
+                                Predicte(e, TrueCondition),
+                                qnp,
+                                DataUpdate.Id(),
+                                EventStreamUpdate.Id(),
+                            ),
+                            Transition(
+                                qnp,
+                                Predicte(e, TrueCondition),
+                                qnp,
+                                DataUpdate.Id(),
+                                EventStreamUpdate.Id(),
+                            ),
+                        ]
+                    )
             return ret
         assert theta == "nd-relaxed", "Incorrect theta: {}".format(theta)
         ret = [
@@ -294,6 +300,13 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
         return ret
 
     D.extend(compute_ignore_transitions())
+
+    if "until" in ast:
+        # p:e:[cndt]_x{n,inf}Ucndt'
+        cndtp = ast["until"]
+        for trans in D:
+            if not trans.is_epsilon():  # take or ignore
+                trans.update_predict(trans.get_predict().with_until(cndtp))
 
     return DST(S, P, X, Y, Q, q0, eta0, D)
 

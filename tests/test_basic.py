@@ -31,6 +31,7 @@ def echo(*args):
 
 def run_query_raw(query: Query, input: EventStream) -> MatchStream:
     operator = CEPOperator.from_query(query)
+    logger.debug("dst: %s", operator.executor.dst.edge_map)
     output = operator << input
     return output
 
@@ -58,7 +59,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'a1': [e{'id': 1, 'name': 1, 'price': 0}]}, {'a1': [e{'id': 4, 'name': 1, 'price': 2}]}]",
+            "[{'a1': [e(1,1,0)]}, {'a1': [e(4,1,2)]}]",
         )
 
     def test_lpat_nn(self):
@@ -67,7 +68,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
         )
 
     def test_lpat_nm(self):
@@ -76,7 +77,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
         )
 
     def test_lpat_nm_relaxed(self):
@@ -85,7 +86,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 2, 'name': 1, 'price': 5}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 2, 'name': 1, 'price': 5}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 2, 'name': 1, 'price': 5}, e{'id': 4, 'name': 1, 'price': 2}]}]",
+            "[{'al': [e(1,1,0), e(2,1,5)]}, {'al': [e(1,1,0), e(2,1,5), e(4,1,2)]}, {'al': [e(2,1,5), e(4,1,2)]}]",
         )
 
     def test_lpat_nm_ndrelaxed(self):
@@ -94,7 +95,7 @@ class TestBasicPatternSequence(unittest.TestCase):
         output = run_query(query, input)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}]",
+            "[{'al': [e(1,1,0), e(3,1,1)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(1,1,0), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2)]}]",
         )
 
     def test_itercndt_lap(self):
@@ -108,7 +109,7 @@ class TestBasicPatternSequence(unittest.TestCase):
             self.assertLessEqual(sum, 5)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 1, 'name': 1, 'price': 1}, e{'id': 2, 'name': 1, 'price': 4}]}, {'al': [e{'id': 2, 'name': 1, 'price': 4}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(1,1,1), e(2,1,4)]}, {'al': [e(2,1,4), e(3,1,1)]}, {'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
         )
 
     def test_lpat_n_inf(self):
@@ -119,7 +120,7 @@ class TestBasicPatternSequence(unittest.TestCase):
             self.assertGreaterEqual(len(match["al"]), 2)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(4,1,2), e(5,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(5,1,3), e(6,1,3)]}]",
         )
 
     def test_lpat_n_inf_relaxed(self):
@@ -130,7 +131,7 @@ class TestBasicPatternSequence(unittest.TestCase):
             self.assertGreaterEqual(len(match["al"]), 2)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(1,1,0), e(3,1,1)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(4,1,2), e(5,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(5,1,3), e(6,1,3)]}]",
         )
 
     def test_lpat_n_inf_ndrelaxed(self):
@@ -141,5 +142,29 @@ class TestBasicPatternSequence(unittest.TestCase):
             self.assertGreaterEqual(len(match["al"]), 3)
         self.assertEqual(
             output,
-            "[{'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 3, 'name': 1, 'price': 1}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 1, 'name': 1, 'price': 0}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 4, 'name': 1, 'price': 2}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 3, 'name': 1, 'price': 1}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}, {'al': [e{'id': 4, 'name': 1, 'price': 2}, e{'id': 5, 'name': 1, 'price': 3}, e{'id': 6, 'name': 1, 'price': 3}]}]",
+            "[{'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(5,1,3)]}, {'al': [e(1,1,0), e(4,1,2), e(5,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2), e(6,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(5,1,3), e(6,1,3)]}, {'al': [e(1,1,0), e(3,1,1), e(6,1,3)]}, {'al': [e(1,1,0), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(1,1,0), e(4,1,2), e(6,1,3)]}, {'al': [e(1,1,0), e(5,1,3), e(6,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(5,1,3), e(6,1,3)]}, {'al': [e(3,1,1), e(4,1,2), e(6,1,3)]}, {'al': [e(3,1,1), e(5,1,3), e(6,1,3)]}, {'al': [e(4,1,2), e(5,1,3), e(6,1,3)]}]",
+        )
+
+    def test_lpat_n_inf_until(self):
+        query = Query.from_sample("lpat-n-inf-until")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 2)
+            self.assertLess(sum([e["price"] for e in match["al"]]), 6)
+        self.assertEqual(
+            output,
+            "[{'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
+        )
+
+    def test_lpat_n_inf_until_relaxed(self):
+        query = Query.from_sample("lpat-n-inf-until-relaxed")
+        input = ese_from_list([(1, 0), (1, 5), (1, 1), (1, 2), (1, 3), (1, 3)])
+        output, mstream = run_query(query, input, with_raw=True)
+        for match in mstream:
+            self.assertGreaterEqual(len(match["al"]), 2)
+            self.assertLess(sum([e["price"] for e in match["al"]]), 6)
+        self.assertEqual(
+            output,
+            "[{'al': [e(1,1,0), e(3,1,1)]}, {'al': [e(1,1,0), e(3,1,1), e(4,1,2)]}, {'al': [e(3,1,1), e(4,1,2)]}, {'al': [e(4,1,2), e(5,1,3)]}]",
         )

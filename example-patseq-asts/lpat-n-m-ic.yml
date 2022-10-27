@@ -15,4 +15,4 @@ patseq:
     to: 3 # inf
 context:
   schema:
-    e: ["name", "price"]
+    e: ["id", "name", "price"]
