@@ -63,3 +63,21 @@ class TestCombinePattern(unittest.TestCase):
             output,
             "[{'a': [e(2,1,5)], 'b': [e(3,2,0)]}, {'a': [e(4,1,2)], 'b': [e(5,2,8)]}]",
         )
+
+    def test_strict_nested(self):
+        query = Query.from_sample("cat-strict-2")
+        input = ese_from_list([(1, 0), (1, 5), (2, 0), (3, 2), (2, 8)])
+        output = run_query(query, input)
+        self.assertEqual(
+            output,
+            "[{'a': [e(2,1,5)], 'b': [e(3,2,0)], 'c': [e(4,3,2)]}]",
+        )
+
+    def test_strict_looping(self):
+        query = Query.from_sample("cat-strict-3")
+        input = ese_from_list([(1, 0), (1, 5), (2, 0), (3, 2), (1, 8), (2, 8), (2, 8)])
+        output = run_query(query, input)
+        self.assertEqual(
+            output,
+            "[{'a': [e(1,1,0), e(2,1,5)], 'b': [e(3,2,0), e(6,2,8)]}, {'a': [e(2,1,5)], 'b': [e(3,2,0), e(6,2,8)]}, {'a': [e(1,1,0), e(2,1,5)], 'b': [e(3,2,0), e(6,2,8), e(7,2,8)]}, {'a': [e(2,1,5)], 'b': [e(3,2,0), e(6,2,8), e(7,2,8)]}, {'a': [e(1,1,0), e(2,1,5), e(5,1,8)], 'b': [e(6,2,8), e(7,2,8)]}, {'a': [e(1,1,0), e(5,1,8)], 'b': [e(6,2,8), e(7,2,8)]}, {'a': [e(2,1,5), e(5,1,8)], 'b': [e(6,2,8), e(7,2,8)]}, {'a': [e(5,1,8)], 'b': [e(6,2,8), e(7,2,8)]}]",
+        )

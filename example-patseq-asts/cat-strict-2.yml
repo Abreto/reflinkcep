@@ -1,0 +1,28 @@
+type: "Query"
+patseq:
+  type: "combine"
+  contiguity: "strict"
+  left:
+    type: "combine"
+    contiguity: "strict"
+    left:
+      type: "spat"
+      name: "a"
+      event: "e"
+      cndt:
+        expr: name == 1
+    right:
+      type: "spat"
+      name: "b"
+      event: "e"
+      cndt:
+        expr: name == 2
+  right:
+    type: "spat"
+    name: "c"
+    event: "e"
+    cndt:
+      expr: name == 3
+context:
+  schema:
+    e: ["id", "name", "price"]
