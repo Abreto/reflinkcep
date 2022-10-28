@@ -1,6 +1,7 @@
 import logging
 
 from reflinkcep.DST import DST, Configuration
+from reflinkcep.ast import QueryContext
 from reflinkcep.event import Event, EventStream, Stream
 
 Match = dict[str, EventStream]
@@ -9,9 +10,19 @@ MatchStream = Stream[Match]
 logger = logging.getLogger(__name__)
 
 
+class AfterMatchStrategy(str):
+    @classmethod
+    def from_context(cls, ctx: QueryContext) -> "AfterMatchStrategy":
+        strategy = "NoSkip"
+        if "strategy" in ctx:
+            strategy: str = ctx["strategy"]
+        return cls(strategy)
+
+
 class Executor:
-    def __init__(self, dst: DST) -> None:
+    def __init__(self, dst: DST, strategy: AfterMatchStrategy) -> None:
         self.dst = dst
+        self.strategy = strategy
 
     def reset(self):
         self.S = []
@@ -59,10 +70,24 @@ class Executor:
                             logger.debug("found accepted %s", dig)
 
         out = Stream()
-        for k, conf in self.S:  # TODO: sorted self.S
+        lazy_delete = dict()
+        for k, conf in self.S:
+            if k in lazy_delete:
+                continue
             if dst.accept(conf):
                 out.append(dst.output(conf))
                 logger.debug("accept %s", conf)
-            # TODO: after-match strategy
+
+                if self.strategy == "NoSkip":
+                    pass
+                elif self.strategy == "SkipToNext":
+                    logger.debug("Prune partial matches started at %d", k)
+                    lazy_delete[k] = True
+                elif self.strategy == "SkipPastLastEvent":
+                    logger.debug("Prune all partial matches")
+                    self.S.clear()
+                    break
+                else:
+                    raise ValueError("Unknown strategy: {}".format(self.strategy))
         logger.debug("total out: %s", out)
         return out
