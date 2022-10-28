@@ -387,6 +387,30 @@ def compile_gpat(ast: AST, ctx: QueryContext) -> DST:
     return ASTCompiler.compile(ast["child"], ctx)
 
 
+@ASTCompiler.register("gpat-times")
+def compile_gpat_times(ast: AST, ctx: QueryContext) -> DST:
+    loop = ast["loop"]
+    n = loop["from"]
+    m = loop["to"]
+
+    dst0 = ASTCompiler.compile(ast["child"], ctx)
+    dst = [ASTCompiler.compile(ast["child"], ctx) for _ in range(m)]
+
+    S = dst0.Sigma
+    P = dst0.Pi
+    X = dst0.X
+    Y = dst0.Y
+    q0 = State("gpat-0")
+    qf = State("gpat-f")
+    Q = [q0, qf]
+    D: TransitionCollection[Transition] = TransitionCollection()
+
+    for i in range(m):
+        idx = i + 1
+        Q.extend(dst[i].Q)
+        D.extend(dst[i].Delta)
+
+
 def compile_impl(ast: AST, ctx: QueryContext) -> DST:
     return ASTCompiler.compile(ast, ctx)
 
