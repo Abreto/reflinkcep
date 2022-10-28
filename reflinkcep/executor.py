@@ -34,7 +34,8 @@ class Executor:
         while i < n:
             k, conf = T[i]
             # print("At ", conf, sep="", flush=True)
-            logger.debug("At %s", conf)
+            logger.debug("current T: %s", T)
+            logger.debug("At %d, %s", k, conf)
             # print(k, i, n, sep=" ")
             i += 1
 
@@ -46,7 +47,7 @@ class Executor:
                     logger.debug("now go ahead %s", new_conf)
                     new_tuple = self.current_tuple(new_conf)
                     if edge.is_epsilon():
-                        T.append(new_tuple)
+                        T.insert(i, new_tuple)
                         logger.debug("epsilon to %s with %s", new_tuple, edge)
                         n += 1
                     else:

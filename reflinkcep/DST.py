@@ -1,9 +1,13 @@
 from copy import deepcopy
 from dataclasses import dataclass
+from logging import getLogger
+from tarfile import is_tarfile
 from typing import Callable, Iterable
 
 from reflinkcep.defs import value_t
 from reflinkcep.event import Event, EventAttrMap, EventStream
+
+logger = getLogger(__name__)
 
 Val = value_t
 Set = set
@@ -177,6 +181,10 @@ class Transition:
     def advance(self, conf: Configuration, event: Event) -> Configuration:
         """Calculate next configuration"""
         is_last_take = conf.last_take if self.is_epsilon() else self.is_take()
+        if self.is_take():
+            logger.debug("Taking %s", event)
+        elif not self.is_epsilon:
+            logger.debug("Ignoring %s", event)
         return Configuration(
             self.q2,
             self.alpha.update(conf.eta, event),
@@ -257,3 +265,9 @@ class DST:
     def output(self, conf: Configuration) -> bool:
         qout = conf.get_state().out
         return dict([(key, conf.ctx[var]) for key, var in qout.items()])
+
+    def _print_trans_map(self) -> str:
+        return "\n".join(
+            "{}:[\n{}\n]".format(q, "\n".join(str(e) for e in edges))
+            for q, edges in self.edge_map.items()
+        )
