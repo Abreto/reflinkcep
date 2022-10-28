@@ -382,6 +382,11 @@ def compile_combine(ast: AST, ctx: QueryContext) -> DST:
     return DST(S, P, X, Y, Q, q01, eta0, D)
 
 
+@ASTCompiler.register("gpat")
+def compile_gpat(ast: AST, ctx: QueryContext) -> DST:
+    return ASTCompiler.compile(ast["child"], ctx)
+
+
 def compile_impl(ast: AST, ctx: QueryContext) -> DST:
     return ASTCompiler.compile(ast, ctx)
 
