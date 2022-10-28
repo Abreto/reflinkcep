@@ -16,7 +16,7 @@ from reflinkcep.DST import (
     func_merge,
     transitions_union,
 )
-from reflinkcep.executor import Executor
+from reflinkcep.executor import AfterMatchStrategy, Executor
 
 
 def get_take_dataupdate(ast: AST) -> tuple[Set, DataUpdate, Func]:
@@ -411,10 +411,11 @@ def compile_gpat_times(ast: AST, ctx: QueryContext) -> DST:
         D.extend(dst[i].Delta)
 
 
-def compile_impl(ast: AST, ctx: QueryContext) -> DST:
-    return ASTCompiler.compile(ast, ctx)
+def compile_impl(ast: AST, ctx: QueryContext) -> tuple[DST, AfterMatchStrategy]:
+    strategy = AfterMatchStrategy.from_context(ctx)
+    return ASTCompiler.compile(ast, ctx), strategy
 
 
 def compile(query: Query) -> Executor:
-    dst = compile_impl(query.patseq, query.context)
-    return Executor(dst)
+    dst, strategy = compile_impl(query.patseq, query.context)
+    return Executor(dst, strategy)

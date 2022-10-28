@@ -61,4 +61,5 @@ class Query:
         self.context = context
 
     def __repr__(self) -> str:
-        return ast_repr(self.patseq)
+        strategy = self.context["strategy"] if "strategy" in self.context else "NoSkip"
+        return "{}({})".format(strategy, ast_repr(self.patseq))

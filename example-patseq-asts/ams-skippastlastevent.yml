@@ -1,0 +1,23 @@
+type: "Query"
+patseq:
+  type: "combine"
+  contiguity: "relaxed"
+  left:
+    type: "lpat-inf"
+    name: "b"
+    event: "e"
+    cndt:
+      expr: name == 2
+    loop:
+      contiguity: relaxed
+      from: 1
+  right:
+    type: "spat"
+    name: "c"
+    event: "e"
+    cndt:
+      expr: name == 3
+context:
+  strategy: SkipPastLastEvent # NoSkip (default), SkipToNext, SkipPastLastEvent
+  schema:
+    e: ["id", "name", "price"]
