@@ -81,7 +81,7 @@ class ConditionEvaluator:
 
 
 @dataclass
-class Predicte:
+class Predicte:  # predicate
     ev_type: str
     cndt: Condition
     ANY_TYPE = "*"
@@ -89,6 +89,10 @@ class Predicte:
     def __post_init__(self):
         self.evaluator = ConditionEvaluator(self.cndt)
         self.epsilon = self.ev_type is None
+
+    @classmethod
+    def epsilon(cls) -> "Predicte":
+        return cls(None, TrueCondition)
 
     def neg(self):
         """Return !(cndt)"""

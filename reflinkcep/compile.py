@@ -402,13 +402,36 @@ def compile_gpat_times(ast: AST, ctx: QueryContext) -> DST:
     Y = dst0.Y
     q0 = State("gpat-0")
     qf = State("gpat-f")
-    Q = [q0, qf]
+    Q = Set([q0, qf])
     D: TransitionCollection[Transition] = TransitionCollection()
 
     for i in range(m):
-        idx = i + 1
-        Q.extend(dst[i].Q)
+        Q |= dst[i].Q
         D.extend(dst[i].Delta)
+
+    eps = Predicte.epsilon()
+    duid = DataUpdate.Id()
+    esuid = EventStreamUpdate.Id()
+
+    # proceed
+    D.append(Transition(q0, eps, dst[0].q0, duid, esuid))
+    for i in range(m - 1):
+        for q in dst[i].final_states():
+            D.append(Transition(q, eps, dst[i + 1].q0, duid, esuid))
+
+    # output
+    for i in range(n - 1, m):
+        for q in dst[i].final_states():
+            D.append(Transition(q, eps, qf, duid, esuid))
+    for i in range(m):
+        for q in dst[i].final_states():
+            q.clear_output()
+    for q in dst0.final_states():
+        qf.extend_output(q.out)
+
+    return DST(
+        S, P, X, Y, Q, q0, dst0.eta, D
+    )  # TODO: initialize variable on every group begining?
 
 
 def compile_impl(ast: AST, ctx: QueryContext) -> tuple[DST, AfterMatchStrategy]:
