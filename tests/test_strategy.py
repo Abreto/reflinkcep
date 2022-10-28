@@ -72,3 +72,23 @@ b: e(2,2,1), e(3,2,2); c: e(4,3,0)
 b: e(2,2,1); c: e(4,3,0)
 b: e(3,2,2); c: e(4,3,0)""",
         )
+
+    def test_skiptonext(self):
+        query = Query.from_sample("ams-skiptonext")
+        input = ese_from_list([(2, 0), (2, 1), (2, 2), (3, 0)])
+        output = run_query(query, input, with_fancy_output=True)
+        self.assertEqual(
+            output,
+            """b: e(1,2,0), e(2,2,1), e(3,2,2); c: e(4,3,0)
+b: e(2,2,1), e(3,2,2); c: e(4,3,0)
+b: e(3,2,2); c: e(4,3,0)""",
+        )
+
+    def test_skippastlastevent(self):
+        query = Query.from_sample("ams-skippastlastevent")
+        input = ese_from_list([(2, 0), (2, 1), (2, 2), (3, 0)])
+        output = run_query(query, input, with_fancy_output=True)
+        self.assertEqual(
+            output,
+            """b: e(1,2,0), e(2,2,1), e(3,2,2); c: e(4,3,0)""",
+        )

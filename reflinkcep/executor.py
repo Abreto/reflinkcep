@@ -44,10 +44,8 @@ class Executor:
         n = len(T)
         while i < n:
             k, conf = T[i]
-            # print("At ", conf, sep="", flush=True)
             logger.debug("current T: %s", T)
             logger.debug("At %d, %s", k, conf)
-            # print(k, i, n, sep=" ")
             i += 1
 
             q = conf.get_state()
@@ -56,7 +54,7 @@ class Executor:
                 if edge.predict(conf, event):
                     new_conf = edge.advance(conf, event)
                     logger.debug("now go ahead %s", new_conf)
-                    new_tuple = self.current_tuple(new_conf)
+                    new_tuple = (k, new_conf)
                     if edge.is_epsilon():
                         T.insert(i, new_tuple)
                         logger.debug("epsilon to %s with %s", new_tuple, edge)
