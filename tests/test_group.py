@@ -99,3 +99,14 @@ a: e(1,1,0), e(3,1,0), e(5,1,0), e(7,1,0); b: e(2,2,5), e(4,2,2), e(6,2,2), e(8,
 a: e(3,1,0), e(5,1,0), e(7,1,0); b: e(4,2,2), e(6,2,2), e(8,2,5)
 a: e(5,1,0), e(7,1,0); b: e(6,2,2), e(8,2,5)""",
         )
+
+    def test_loop_inf_until(self):
+        query = Query.from_sample("gpat-loop-inf-until")
+        input = ese_from_list(
+            [(1, 0), (2, 5), (1, 0), (2, 2), (1, 7), (2, 2), (1, 0), (2, 5), (1, 8)]
+        )
+        output = run_query(query, input, with_fancy_output=True)
+        self.assertEqual(
+            output,
+            """a: e(1,1,0), e(3,1,0); b: e(2,2,5), e(4,2,2)""",
+        )

@@ -477,6 +477,12 @@ def compile_gpat_inf(ast: AST, ctx: QueryContext) -> DST:
     for q in dst0.final_states():
         qf.extend_output(q.out)
 
+    if "until" in ast:
+        cndt = ast["until"]
+        for trans in D:
+            if not trans.is_epsilon():
+                trans.update_predict(trans.get_predict().with_until(cndt))
+
     return DST(
         S, P, X, Y, Q, q0, dst0.eta, D
     )  # TODO: initialize variable on every group begining?
