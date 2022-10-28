@@ -434,6 +434,54 @@ def compile_gpat_times(ast: AST, ctx: QueryContext) -> DST:
     )  # TODO: initialize variable on every group begining?
 
 
+@ASTCompiler.register("gpat-inf")
+def compile_gpat_inf(ast: AST, ctx: QueryContext) -> DST:
+    loop = ast["loop"]
+    n = loop["from"]
+
+    dst0 = ASTCompiler.compile(ast["child"], ctx)
+    dst = [ASTCompiler.compile(ast["child"], ctx) for _ in range(n)]
+
+    S = dst0.Sigma
+    P = dst0.Pi
+    X = dst0.X
+    Y = dst0.Y
+    q0 = State("gpat-inf-0")
+    qf = State("gpat-inf-f")
+    Q = Set([q0, qf])
+    D: TransitionCollection[Transition] = TransitionCollection()
+
+    for i in range(n):
+        Q |= dst[i].Q
+        D.extend(dst[i].Delta)
+
+    eps = Predicte.epsilon()
+    duid = DataUpdate.Id()
+    esuid = EventStreamUpdate.Id()
+
+    # proceed
+    D.append(Transition(q0, eps, dst[0].q0, duid, esuid))
+    for i in range(n - 1):
+        for q in dst[i].final_states():
+            D.append(Transition(q, eps, dst[i + 1].q0, duid, esuid))
+    for q in dst[n - 1].final_states():
+        D.append(Transition(q, eps, dst[n - 1].q0, duid, esuid))
+
+    # output
+    for i in range(n - 1, n):
+        for q in dst[i].final_states():
+            D.append(Transition(q, eps, qf, duid, esuid))
+    for i in range(n):
+        for q in dst[i].final_states():
+            q.clear_output()
+    for q in dst0.final_states():
+        qf.extend_output(q.out)
+
+    return DST(
+        S, P, X, Y, Q, q0, dst0.eta, D
+    )  # TODO: initialize variable on every group begining?
+
+
 def compile_impl(ast: AST, ctx: QueryContext) -> tuple[DST, AfterMatchStrategy]:
     strategy = AfterMatchStrategy.from_context(ctx)
     return ASTCompiler.compile(ast, ctx), strategy
