@@ -1,5 +1,10 @@
 # FlinkCEP Recreate
 
+## Test
+```
+LOGLEVEL=info python3 -m unittest discover -s tests
+```
+
 ## Architecture
 
 ```

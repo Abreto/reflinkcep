@@ -39,10 +39,22 @@ def ast_repr(ast: AST) -> str:
             until_suffix,
         )
     elif ast["type"] == "combine":
-        return "{}{}{}".format(ast_repr(ast["left"]), CONTIGUITY_REPR_MAP[ast["contiguity"]], ast_repr(ast["right"]))
+        return "{}{}{}".format(
+            ast_repr(ast["left"]),
+            CONTIGUITY_REPR_MAP[ast["contiguity"]],
+            ast_repr(ast["right"]),
+        )
+    elif ast["type"] == "gpat":
+        return "({})".format(ast_repr(ast["child"]))
+    elif ast["type"] == "gpat-times":
+        return "({}){{{},{}}}".format(
+            ast_repr(ast["child"]), ast["loop"]["from"], ast["loop"]["to"]
+        )
     elif ast["type"] == "gpat-inf":
         until_suffix = "U({})".format(ast["until"]["expr"]) if "until" in ast else ""
-        return "({}){{{},inf}}{}".format(ast_repr(ast["child"]), ast["loop"]["from"], until_suffix)
+        return "({}){{{},inf}}{}".format(
+            ast_repr(ast["child"]), ast["loop"]["from"], until_suffix
+        )
     raise ValueError("Not supported AST node {}".format(ast["type"]))
 
 
