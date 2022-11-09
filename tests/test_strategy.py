@@ -9,6 +9,8 @@ from reflinkcep.event import Event, EventStream
 from reflinkcep.executor import Match, MatchStream
 from reflinkcep.operator import CEPOperator
 
+from .utils import run_query_raw
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
@@ -23,17 +25,6 @@ def EventE(name: int, price: int = 0) -> Event:
 def ese_from_list(input: list[tuple[int, int]]) -> EventStream:
     EventE.id = 0
     return EventStream(EventE(n, p) for n, p in input)
-
-
-def echo(*args):
-    print(*args, sep="")
-
-
-def run_query_raw(query: Query, input: EventStream) -> MatchStream:
-    operator = CEPOperator.from_query(query)
-    logger.debug("dst:\n%s", operator.executor.dst._print_trans_map())
-    output = operator << input
-    return output
 
 
 def run_query(

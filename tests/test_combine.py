@@ -6,8 +6,10 @@ import unittest
 from reflinkcep.ast import Query
 from reflinkcep.compile import compile
 from reflinkcep.event import Event, EventStream
-from reflinkcep.executor import MatchStream
+from reflinkcep.executor import MatchStream, Match
 from reflinkcep.operator import CEPOperator
+
+from .utils import run_query_raw
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
@@ -25,25 +27,11 @@ def ese_from_list(input: list[tuple[int, int]]) -> EventStream:
     return EventStream(EventE(n, p) for n, p in input)
 
 
-def echo(*args):
-    print(*args, sep="")
-
-
-def run_query_raw(query: Query, input: EventStream) -> MatchStream:
-    operator = CEPOperator.from_query(query)
-    logger.debug("dst:\n%s", operator.executor.dst._print_trans_map())
-    output = operator << input
-    return output
-
-
 def run_query(
     query: Query, input: EventStream, with_raw=False, with_fancy_output=False
 ) -> Union[str, tuple[str, MatchStream]]:
     output = run_query_raw(query, input)
     fancy_output = "\n".join(str(x) for x in output)
-    # echo("query: ", query)
-    # echo("input: ", input)
-    # echo("output: ", output)
     logger.info("query: %s", query)
     logger.info("input: %s", input)
     logger.info("output: %s", output)

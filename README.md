@@ -1,8 +1,8 @@
 # FlinkCEP Recreate
 
-## Test
+## Generate results in csv
 ```
-LOGLEVEL=info python3 -m unittest discover -s tests
+GENCSV=1 python3 -m unittest discover
 ```
 
 ## Architecture
