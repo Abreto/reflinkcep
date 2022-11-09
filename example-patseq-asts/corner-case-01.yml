@@ -1,0 +1,14 @@
+type: "query"
+patseq:
+  type: "lpat"
+  name: "p"
+  event: "e"
+  cndt:
+    expr: name == 1
+  loop:
+    contiguity: nd-relaxed
+    from: 2
+    to: 5
+context:
+  schema:
+    e: ["id", "name", "price"]
