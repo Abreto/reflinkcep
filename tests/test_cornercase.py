@@ -32,7 +32,6 @@ def run_query(
     fancy_output = "\n".join(match_repr(match) for match in output)
     logger.info("query: %s", query)
     logger.info("input: %s", input)
-    logger.info("output: %s", output)
     logger.info("fancy output: %d matches\n%s", len(output), fancy_output)
 
     output_str = fancy_output if with_fancy_output else str(output)
@@ -168,4 +167,45 @@ context:
             output,
             """c: e(1,3,0)
 c: e(1,3,0); a: e(3,1,0)""",
+        )
+
+    def test_nested_until(self):
+        query = Query.from_yaml(
+            """
+type: "query"
+patseq:
+  type: "gpat-inf"
+  child:
+    type: "gpat-inf"
+    child:
+      type: "spat"
+      name: "a"
+      event: "e"
+      cndt:
+        expr: name == 1
+    loop:
+      from: 1
+      to: inf
+    until:
+      expr: name == 2
+  loop:
+    from: 1
+    to: inf
+  until:
+    expr: name == 3
+context:
+  schema:
+    e: ["id", "name", "price"]
+"""
+        )
+        input = ese_from_list([(i, 0) for i in [1, 1, 3, 1, 2, 3]])
+        output = run_query(query, input)
+
+        self.assertEqual(
+            output,
+            """a: e(1,1,0)
+a: e(1,1,0), e(2,1,0)
+a: e(1,1,0), e(2,1,0)
+a: e(2,1,0)
+a: e(4,1,0)""",
         )
