@@ -26,7 +26,7 @@ def ese_from_list(input: list[tuple[int, int]]) -> EventStream:
 
 
 def run_query(
-    query: Query, input: EventStream, with_raw=False, with_fancy_output=False
+    query: Query, input: EventStream, with_raw=False, with_fancy_output=True
 ) -> Union[str, tuple[str, MatchStream]]:
     output = run_query_raw(query, input)
     fancy_output = "\n".join(match_repr(match) for match in output)
@@ -52,4 +52,42 @@ class TestCornerCase(unittest.TestCase):
 p: e(1,1,0), e(2,1,1), e(3,1,2)
 p: e(1,1,0), e(3,1,2)
 p: e(2,1,1), e(3,1,2)""",
+        )
+
+    def test_circ_until(self):
+        query = Query.from_yaml(
+            """
+type: "query"
+patseq:
+  type: "combine"
+  contiguity: "relaxed"
+  left:
+    type: "spat"
+    name: "c"
+    event: "e"
+    cndt:
+      expr: name == 3
+  right:
+    type: "lpat-inf"
+    name: "a"
+    event: "e"
+    cndt:
+      expr: name == 1
+    loop:
+      contiguity: relaxed
+      from: 1
+    until:
+      expr: name == 2
+context:
+  schema:
+    e: ["id", "name", "price"]
+"""
+        )
+        input = ese_from_list([(3, 0), (2, 0), (1, 0), (1, 0)])
+        output = run_query(query, input)
+
+        self.assertEqual(
+            output,
+            """c: e(1,3,0); a: e(3,1,0)
+c: e(1,3,0); a: e(3,1,0), e(4,1,0)""",
         )

@@ -71,6 +71,11 @@ class Query:
             queryobj = yaml.load(f, Loader=yaml.SafeLoader)
         return Query.from_dict(queryobj)
 
+    @staticmethod
+    def from_yaml(stream):
+        queryobj = yaml.load(stream, Loader=yaml.SafeLoader)
+        return Query.from_dict(queryobj)
+
     def __init__(self, patseq: AST, context: QueryContext, raw: str = "") -> None:
         self.patseq = patseq
         self.context = context
