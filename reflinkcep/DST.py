@@ -5,7 +5,7 @@ from tarfile import is_tarfile
 from typing import Callable, Iterable
 
 from reflinkcep.defs import value_t
-from reflinkcep.event import Event, EventAttrMap, EventStream
+from reflinkcep.event import Event, EventAttrMap, Stream, EventStream
 
 logger = getLogger(__name__)
 
@@ -152,7 +152,7 @@ class EventStreamUpdate:
         # Take the event
         newctx = deepcopy(ctx)
         if not self.sink in newctx:
-            newctx[self.sink] = []
+            newctx[self.sink] = Stream()
         newctx[self.sink].append(event)
         return newctx
 
@@ -268,7 +268,14 @@ class DST:
 
     def output(self, conf: Configuration) -> bool:
         qout = conf.get_state().out
-        return dict([(key, conf.ctx[var]) for key, var in qout.items()])
+        return dict(
+            [
+                (key, conf.ctx[var])
+                for key, var in filter(
+                    lambda kv: kv[1] in conf.ctx, qout.items()
+                )  # do not output undefined var in ctx
+            ]
+        )
 
     def _print_trans_map(self) -> str:
         return "\n".join(

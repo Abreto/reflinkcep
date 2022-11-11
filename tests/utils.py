@@ -67,7 +67,11 @@ class TestRecorder:
 def run_query_raw(query: Query, input: EventStream) -> MatchStream:
     with stopwatch() as sw:
         operator = CEPOperator.from_query(query)
-        logger.debug("dst: %s", operator.executor.dst.edge_map)
+        logger.debug(
+            "dst: from %s\n%s",
+            operator.executor.dst.q0,
+            operator.executor.dst._print_trans_map(),
+        )
         output = operator << input
         TestRecorder.log(query, input, output, sw.elapsed_ms())
     return output
