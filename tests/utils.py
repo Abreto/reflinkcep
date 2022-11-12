@@ -54,7 +54,6 @@ class TestRecorder:
     @classmethod
     def log(
         cls,
-        qfrom: str,
         query: Query,
         input: EventStream,
         output: MatchStream,
@@ -63,7 +62,7 @@ class TestRecorder:
         fancy_output = "\n".join(match_repr(x) for x in output)
         cls.record(
             '{},"{}","{}","{}","{}",{}'.format(
-                cls.idx, qfrom, query, input, fancy_output, elapsed_ms
+                cls.idx, query._get_from(), query, input, fancy_output, elapsed_ms
             )
         )
         cls.idx += 1
@@ -78,5 +77,6 @@ def run_query_raw(query: Query, input: EventStream) -> MatchStream:
             operator.executor.dst._print_trans_map(),
         )
         output = operator << input
-        TestRecorder.log(query._get_from(), query, input, output, sw.elapsed_ms())
+        elapsed_ms = sw.elapsed_ms()
+    TestRecorder.log(query, input, output, elapsed_ms)
     return output
