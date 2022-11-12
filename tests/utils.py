@@ -62,7 +62,7 @@ class TestRecorder:
     ):
         fancy_output = "\n".join(match_repr(x) for x in output)
         cls.record(
-            '{},"{}","{}","{}",{}'.format(
+            '{},"{}","{}","{}","{}",{}'.format(
                 cls.idx, qfrom, query, input, fancy_output, elapsed_ms
             )
         )
