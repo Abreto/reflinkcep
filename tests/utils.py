@@ -34,7 +34,7 @@ def match_repr(match: Match) -> str:
 
 
 class TestRecorder:
-    CSV_HEAD = "#,pattern,input,output,elapsed_ms\n"
+    CSV_HEAD = "#,from,pattern,input,output,elapsed_ms\n"
     dest = "results-{}.csv".format(time.strftime("%Y%m%d-%H%M%S"))
     idx = 0
     should_record = os.environ.get("GENCSV", "0") == "1"
@@ -53,12 +53,17 @@ class TestRecorder:
 
     @classmethod
     def log(
-        cls, query: Query, input: EventStream, output: MatchStream, elapsed_ms: float
+        cls,
+        qfrom: str,
+        query: Query,
+        input: EventStream,
+        output: MatchStream,
+        elapsed_ms: float,
     ):
         fancy_output = "\n".join(match_repr(x) for x in output)
         cls.record(
             '{},"{}","{}","{}",{}'.format(
-                cls.idx, query, input, fancy_output, elapsed_ms
+                cls.idx, qfrom, query, input, fancy_output, elapsed_ms
             )
         )
         cls.idx += 1
@@ -73,5 +78,5 @@ def run_query_raw(query: Query, input: EventStream) -> MatchStream:
             operator.executor.dst._print_trans_map(),
         )
         output = operator << input
-        TestRecorder.log(query, input, output, sw.elapsed_ms())
+        TestRecorder.log(query._get_from(), query, input, output, sw.elapsed_ms())
     return output

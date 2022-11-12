@@ -69,16 +69,25 @@ class Query:
     def from_sample(name: str):
         with open(EXAMPLE_ASTS_PATH / "{}.yml".format(name)) as f:
             queryobj = yaml.load(f, Loader=yaml.SafeLoader)
-        return Query.from_dict(queryobj)
+        q = Query.from_dict(queryobj)
+        q.from_source = name
+        return q
 
     @staticmethod
     def from_yaml(stream):
         queryobj = yaml.load(stream, Loader=yaml.SafeLoader)
-        return Query.from_dict(queryobj)
+        q = Query.from_dict(queryobj)
+        q.from_source = "<YAML>"
+        return q
+
+    def _get_from(self):
+        return self.from_source
 
     def __init__(self, patseq: AST, context: QueryContext, raw: str = "") -> None:
         self.patseq = patseq
         self.context = context
+
+        self.from_source = "<NONE>"
 
     def __repr__(self) -> str:
         strategy = self.context["strategy"] if "strategy" in self.context else "NoSkip"
