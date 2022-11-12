@@ -74,10 +74,10 @@ class Query:
         return q
 
     @staticmethod
-    def from_yaml(stream):
+    def from_yaml(stream, name: str = "<YAML>"):
         queryobj = yaml.load(stream, Loader=yaml.SafeLoader)
         q = Query.from_dict(queryobj)
-        q.from_source = "<YAML>"
+        q.from_source = name
         return q
 
     def _get_from(self):

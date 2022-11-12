@@ -80,7 +80,8 @@ patseq:
 context:
   schema:
     e: ["id", "name", "price"]
-"""
+""",
+            "CircUntil",
         )
         input = ese_from_list([(3, 0), (2, 0), (1, 0), (1, 0)])
         output = run_query(query, input)
@@ -118,7 +119,8 @@ patseq:
 context:
   schema:
     e: ["id", "name", "price"]
-"""
+""",
+            "CircUntilOptional",
         )
         input = ese_from_list([(3, 0), (2, 0), (1, 0), (1, 0)])
         output = run_query(query, input)
@@ -158,7 +160,8 @@ patseq:
 context:
   schema:
     e: ["id", "name", "price"]
-"""
+""",
+            "CircLPatNMUntilOptional",
         )
         input = ese_from_list([(3, 0), (2, 0), (1, 0), (1, 0)])
         output = run_query(query, input)
@@ -196,7 +199,8 @@ patseq:
 context:
   schema:
     e: ["id", "name", "price"]
-"""
+""",
+            "NestedUntil",
         )
         input = ese_from_list([(i, 0) for i in [1, 1, 3, 1, 2, 3]])
         output = run_query(query, input)
