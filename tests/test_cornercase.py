@@ -179,18 +179,17 @@ type: "query"
 patseq:
   type: "gpat-inf"
   child:
-    type: "gpat-inf"
+    type: "gpat"
     child:
-      type: "spat"
+      type: "lpat-inf"
       name: "a"
       event: "e"
       cndt:
         expr: name == 1
-    loop:
-      from: 1
-      to: inf
-    until:
-      expr: name == 2
+      loop:
+        contiguity: relaxed
+        from: 1
+        to: inf
   loop:
     from: 1
     to: inf
