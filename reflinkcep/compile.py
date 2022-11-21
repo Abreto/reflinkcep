@@ -438,7 +438,9 @@ def compile_gpat_times(ast: AST, ctx: QueryContext) -> DST:
 def compile_gpat_inf(ast: AST, ctx: QueryContext) -> DST:
     loop = ast["loop"]
     n = loop["from"]
+    optional = n == 0
 
+    n = max(n, 1)
     dst0 = ASTCompiler.compile(ast["child"], ctx)
     dst = [ASTCompiler.compile(ast["child"], ctx) for _ in range(n)]
 
@@ -482,6 +484,9 @@ def compile_gpat_inf(ast: AST, ctx: QueryContext) -> DST:
         for trans in D:
             if not trans.is_epsilon():
                 trans.update_predict(trans.get_predict().with_until(cndt))
+
+    if optional:
+        D.append(Transition(q0, eps, qf, duid, esuid))
 
     return DST(
         S, P, X, Y, Q, q0, dst0.eta, D
