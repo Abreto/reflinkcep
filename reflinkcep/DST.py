@@ -247,16 +247,25 @@ class DST:
 
     def find_accepted(self, conf: Configuration) -> Configuration:
         """Find accepted configuration from conf via epsilon-transition"""
-        q = conf.get_state()
-        for edge in self.start_from(q):
-            if edge.is_epsilon() and edge.predict(conf, None):
-                newconf = edge.advance(conf, None)
-                if self.accept(newconf):
-                    return newconf
-                newtry = self.find_accepted(newconf)
-                if newtry is not None:
-                    return newtry
-        return None
+        visited = set()
+
+        def find_accepted_impl(conf: Configuration) -> Configuration:
+            q = conf.get_state()
+            # visited[q.name] = True
+            visited.add(q.name)
+            for edge in self.start_from(q):
+                if edge.q2.name in visited:
+                    continue
+                if edge.is_epsilon() and edge.predict(conf, None):
+                    newconf = edge.advance(conf, None)
+                    if self.accept(newconf):
+                        return newconf
+                    newtry = find_accepted_impl(newconf)
+                    if newtry is not None:
+                        return newtry
+            return None
+
+        return find_accepted_impl(conf)
 
     def accept(self, conf: Configuration) -> bool:
         # ignore-last configuration cannot be accept
