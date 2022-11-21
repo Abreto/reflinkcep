@@ -173,10 +173,10 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
 
     X, tdu, eta0 = get_take_dataupdate(ast)
 
-    S = Set(ev)
-    P = Set(name)
+    S = Set([ev])
+    P = Set([name])
     # X = Set(variables.keys())
-    Y = Set(name)
+    Y = Set([name])
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     q = [State(f"{name}-{i+1}") for i in range(n)]
