@@ -64,12 +64,21 @@ class Configuration:
     eta: DataEnv
     ctx: Context
     last_take: bool = False
+    reverse_eps_closure: set[str] = None
+
+    def __post_init__(self):
+        if self.reverse_eps_closure is None:
+            self.reverse_eps_closure = set()
+        self.reverse_eps_closure.add(self.q.name)
 
     def get_state(self) -> State:
         return self.q
 
     def is_last_take(self) -> bool:
         return self.last_take
+
+    def once_epsilon_from(self, q: State) -> bool:
+        return q.name in self.reverse_eps_closure
 
 
 class ConditionEvaluator:
@@ -180,20 +189,35 @@ class Transition:
 
     def predict(self, conf: Configuration, event: Event) -> bool:
         """If this edge can go with (conf, event)"""
+
+        # each state can be reached by epsilon transition only once
+        if self.is_epsilon() and conf.once_epsilon_from(self.q2):
+            return False
+
         return self.p.evaluate(conf, event)
 
     def advance(self, conf: Configuration, event: Event) -> Configuration:
         """Calculate next configuration"""
+
+        # If this is epsilon transition, just follow the privious flag
         is_last_take = conf.last_take if self.is_epsilon() else self.is_take()
+
+        # If this is not a epsilon transition, reset the reverse epsilon closure
+        rev_eps_closure = (
+            conf.reverse_eps_closure.copy() if self.is_epsilon() else set()
+        )
+
         if self.is_take():
             logger.debug("Taking %s", event)
         elif not self.is_epsilon:
             logger.debug("Ignoring %s", event)
+
         return Configuration(
             self.q2,
             self.alpha.update(conf.eta, event),
             self.beta.update(conf.ctx, event),
             is_last_take,
+            reverse_eps_closure=rev_eps_closure,
         )
 
     def is_epsilon(self) -> bool:
