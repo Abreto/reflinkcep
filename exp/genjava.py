@@ -141,7 +141,7 @@ public class Event {{
         this.price = price;
     }}
 
-    public double getPrice() {{
+    public int getPrice() {{
         return price;
     }}
 
@@ -233,11 +233,12 @@ class ASTTranslator:
         inf: bool = False,
         variables: dict = None,
         pattern_name: str = "",
+        default_contiguity: str = "relaxed",
     ) -> str:
         suffix = ""
         n = loop["from"]
         m = loop.get("to", None)
-        contiguity = loop["contiguity"]
+        contiguity = loop.get("contiguity", default_contiguity)
 
         if n == 0:
             n = 1
@@ -339,14 +340,24 @@ class ASTTranslator:
             template += self.compose_skipstrategy()
         template += self.out_nl_indent() + ")"
 
-        t
+        suffix = ""
+        nodetype = ast["type"]
+        if nodetype == "gpat-times" or nodetype == "gpat-inf":
+            suffix += self.compose_suffix(
+                loop=ast["loop"],
+                until=ast.get("until", None),
+                inf=self.is_inf(ast),
+                pattern_name="",
+                default_contiguity="strict",
+            )
 
         self.indent_in()
         self.set_first_of_seq(True)
         child_code = self.translate_pattern(ast["child"])
         self.indent_out()
 
-        return template.format(child_code=child_code)
+        mainpart = template.format(child_code=child_code)
+        return mainpart + suffix
 
     def translate_condition(
         self, cndt: dict, variables: dict = None, pattern_name: str = ""
@@ -485,8 +496,8 @@ def generate_test_class(classname: str, tcdef: dict) -> str:
     query = tcdef["query"]
     context = query["context"]
 
-    if tcdef["query"]["patseq"]["type"] == "gpat":
-        llogger.info("gpat at: {}", classname)
+    if tcdef["query"]["patseq"]["type"].startswith("gpat"):
+        llogger.info("{} at: {}", tcdef["query"]["patseq"]["type"], classname)
 
     methods_code = FLINKCEP_TEMPLATE.format(
         pattern_repr=context["repr"],
