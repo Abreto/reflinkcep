@@ -64,7 +64,7 @@ class Executor:
                         logger.debug("consume to %s with %s", new_tuple, edge)
                         dig = dst.find_accepted(new_conf)
                         if dig is not None:
-                            self.S.append(self.current_tuple(dig))
+                            self.S.append((k, dig))
                             logger.debug("found accepted %s", dig)
 
         out = Stream()
@@ -74,7 +74,7 @@ class Executor:
                 continue
             if dst.accept(conf):
                 out.append(dst.output(conf))
-                logger.debug("accept %s", conf)
+                logger.debug("accept %d, %s", k, conf)
 
                 if self.strategy == "NoSkip":
                     pass
@@ -87,5 +87,8 @@ class Executor:
                     break
                 else:
                     raise ValueError("Unknown strategy: {}".format(self.strategy))
+
+        self.S = [(k, conf) for k, conf in self.S if k not in lazy_delete]
+
         logger.debug("total out: %s", out)
         return out
