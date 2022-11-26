@@ -8,6 +8,7 @@ import yaml
 from run import find_testcases
 
 DEST = Path(__file__).parent.resolve() / "javapackage"
+RESULTS_DIR = "results"
 
 JAVA_PACKAGE_ROOT = "science.abreto.flinkcep"
 JAVA_PACKAGE = f"{JAVA_PACKAGE_ROOT}.massive"
@@ -33,6 +34,7 @@ package {package};
 
 {custom_import}
 
+import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.transformations.OneInputTransformation;
@@ -93,13 +95,12 @@ FLINKCEP_TEMPLATE = """public static void main(String[] args) throws Exception {
             new PatternSelectFunction<Event, String>() {{
                 @Override
                 public String select(Map<String, List<Event>> pattern) throws Exception {{
-                    // System.out.println("result: " + pattern);
-                    return "result: " + pattern;
-                    // return pattern.entrySet().stream().map(
-                    // 	e -> e.getKey() + "[" + e.getValue().stream()
-                    // 		.map(Event::toString)
-                    // 		.reduce("", (a, b) -> a + b) + "]"
-                    // ).reduce("", (a, b) -> a + b);
+                    return String.join("; ", pattern.entrySet().stream().map(
+                        entry -> entry.getKey() + ": " + String.join(
+                            ", ",
+                            entry.getValue().stream().map(Event::toString).toArray(String[]::new)
+                        )
+                    ).toArray(String[]::new));
                 }}
             }}
         );
@@ -118,6 +119,7 @@ FLINKCEP_TEMPLATE = """public static void main(String[] args) throws Exception {
         exp_title.print();
         input.print();
         result.print();
+        result.writeAsText("{result_dest}", WriteMode.OVERWRITE);
 
         // execute program
         env.execute("Flink CEP Experiment");
@@ -155,7 +157,7 @@ public class Event {{
 
     @Override
     public String toString() {{
-        return "e(" + id + ", " + name + ", " + price + ")";
+        return "e(" + id + "," + name + "," + price + ")";
     }}
 }}
 """
@@ -404,8 +406,8 @@ class ASTTranslator:
         def compose_filter():
             code = "@Override" + self.nl_indent()
             code += (
-                "public boolean filter(Event value{}) {{".format(
-                    ", Context<Event> ctx" if iterative else ""
+                "public boolean filter(Event value{} {{".format(
+                    ", Context<Event> ctx) throws Exception" if iterative else ")"
                 )
                 + self.in_nl_indent()
             )
@@ -491,19 +493,17 @@ def translate_pattern(ast: dict) -> str:
     return ast_translater(ast)
 
 
-def generate_test_class(classname: str, tcdef: dict) -> str:
+def generate_test_class(classname: str, tcdef: dict, result_dest: str) -> str:
     input_events = tcdef["input"]
     query = tcdef["query"]
     context = query["context"]
-
-    if tcdef["query"]["patseq"]["type"].startswith("gpat"):
-        llogger.info("{} at: {}", tcdef["query"]["patseq"]["type"], classname)
 
     methods_code = FLINKCEP_TEMPLATE.format(
         pattern_repr=context["repr"],
         events_code=translate_input_events(input_events),
         skip_strategy_member=translate_skip_strategy(context["strategy"]),
         pattern_code=translate_pattern(query["patseq"]),
+        result_dest=result_dest,
     )
 
     return JAVA_CLASS_TEMPLATE.format(testname=classname, methods_code=methods_code)
@@ -514,7 +514,7 @@ def generate_testcase(tc: Path):
     tcdef = read_yaml(tc)
 
     classname = f"Test_{name}"
-    classcode = generate_test_class(classname, tcdef)
+    classcode = generate_test_class(classname, tcdef, f"{RESULTS_DIR}/{name}.txt")
 
     write_class(
         classname,
