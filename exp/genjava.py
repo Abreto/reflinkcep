@@ -8,7 +8,7 @@ import yaml
 from run import find_testcases
 
 DEST = Path(__file__).parent.resolve() / "javapackage"
-RESULTS_DIR = "results"
+RESULTS_DIR = "flinkresults"
 
 JAVA_PACKAGE_ROOT = "science.abreto.flinkcep"
 JAVA_PACKAGE = f"{JAVA_PACKAGE_ROOT}.massive"
@@ -122,7 +122,7 @@ FLINKCEP_TEMPLATE = """public static void main(String[] args) throws Exception {
         result.writeAsText("{result_dest}", WriteMode.OVERWRITE);
 
         // execute program
-        env.execute("Flink CEP Experiment");
+        env.execute("Flink CEP Comparing Experiment {result_dest}");
     }}
 """
 
@@ -368,13 +368,13 @@ class ASTTranslator:
             variables is not None
         )  # TODO: This is buggy (what about variable used in cndt but not in variables?)
 
-        def filter_expr(expr: str) -> str:
+        def filter_expr(expr: str, handle: str = "value") -> str:
             expr = expr.replace("and", "&&")
             expr = expr.replace("or", "||")
             expr = expr.replace("not", "!")
 
             for mb in ["id", "name", "price"]:
-                expr = expr.replace(f"{mb}", f"value.get{mb.capitalize()}()")
+                expr = expr.replace(f"{mb}", f"{handle}.get{mb.capitalize()}()")
 
             return expr
 
@@ -393,7 +393,7 @@ class ASTTranslator:
                 )
                 code += self.nl_indent().join(
                     [
-                        f"{var} = {filter_expr(vardef['update'])};"
+                        f"{var} = {filter_expr(vardef['update'], 'event')};"
                         for var, vardef in variables.items()
                     ]
                 )
