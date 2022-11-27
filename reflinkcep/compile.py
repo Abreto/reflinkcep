@@ -171,6 +171,11 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
     theta = loop["contiguity"]
     n = loop["from"]
 
+    optional = False
+    if 0 == n:
+        optional = True
+        n = 1
+
     X, tdu, eta0 = get_take_dataupdate(ast)
 
     S = Set([ev])
@@ -309,6 +314,17 @@ def compile_lpat_inf(ast: AST, ctx: QueryContext) -> DST:
         for trans in D:
             if not trans.is_epsilon():  # take or ignore
                 trans.update_predict(trans.get_predict().with_until(cndtp))
+
+    if optional:
+        D.append(
+            Transition(
+                q0,
+                Predicte(None, TrueCondition),
+                qf,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
 
     return DST(S, P, X, Y, Q, q0, eta0, D)
 
