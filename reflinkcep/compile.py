@@ -90,14 +90,21 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
     q0 = State(f"{name}-0")
     qf = State(f"{name}-f", {name: name})
     q = [State(f"{name}-{i+1}") for i in range(m)]
-    q.insert(0, q0)
-    Q = Set([*q, qf])
+    q_ignore = [State(f"{name}-ig-{i}") for i in range(1, m)]
+    q.insert(0, q0)  # q_ignore[i] ~ q[i+1], 0 <= i < m - 1
+    Q = Set([*q, qf, *q_ignore])
     D = TransitionCollection()
 
     # take transitions
     esu = EventStreamUpdate(name)
     D.extend(
         [Transition(q[i], Predicte(ev, cndt), q[i + 1], tdu, esu) for i in range(m)]
+    )
+    D.extend(
+        [
+            Transition(q_ignore[i], Predicte(ev, cndt), q[i + 2], tdu, esu)
+            for i in range(m - 1)
+        ]
     )
 
     # proceed transitions
@@ -114,6 +121,9 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
         ]
     )
 
+    def compose_ignore_transitions(q1: State, q2: State, pred: Predicte):
+        return [Transition(q1, pred, q2, DataUpdate.Id(), EventStreamUpdate.Id())]
+
     # ignore transitions
     def compute_ignore_transitions():
         if theta == "strict":
@@ -124,12 +134,24 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
                 Transition(
                     q[i],
                     Predicte(ev, cndt).neg(),
-                    q[i],
+                    q_ignore[i - 1],
                     DataUpdate.Id(),
                     EventStreamUpdate.Id(),
                 )
                 for i in range(1, m)
             ]
+            ret.extend(
+                [
+                    Transition(
+                        q_ignore[i - 1],
+                        Predicte(ev, cndt).neg(),
+                        q_ignore[i - 1],
+                        DataUpdate.Id(),
+                        EventStreamUpdate.Id(),
+                    )
+                    for i in range(1, m)
+                ]
+            )
             for e in total_evtypes:
                 if e != ev:
                     ret.extend(
@@ -137,7 +159,19 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
                             Transition(
                                 q[i],
                                 Predicte(e, TrueCondition),
-                                q[i],
+                                q_ignore[i - 1],
+                                DataUpdate.Id(),
+                                EventStreamUpdate.Id(),
+                            )
+                            for i in range(1, m)
+                        ]
+                    )
+                    ret.extend(
+                        [
+                            Transition(
+                                q_ignore[i - 1],
+                                Predicte(e, TrueCondition),
+                                q_ignore[i - 1],
                                 DataUpdate.Id(),
                                 EventStreamUpdate.Id(),
                             )
@@ -150,7 +184,16 @@ def compile_lpat(ast: AST, ctx: QueryContext) -> DST:
             Transition(
                 q[i],
                 Predicte(Predicte.ANY_TYPE, TrueCondition),
-                q[i],
+                q_ignore[i - 1],
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+            for i in range(1, m)
+        ] + [
+            Transition(
+                q_ignore[i - 1],
+                Predicte(Predicte.ANY_TYPE, TrueCondition),
+                q_ignore[i - 1],
                 DataUpdate.Id(),
                 EventStreamUpdate.Id(),
             )
@@ -362,13 +405,28 @@ def compile_combine(ast: AST, ctx: QueryContext) -> DST:
         )
         q.clear_output()
 
+    if contiguity != "strict":
+        q02_ignore = State(f"{q02.name}-ignore")
+        Q.add(q02_ignore)
+        for edge in right.start_from(q02):
+            if edge.is_take():
+                D.append(Transition(q02_ignore, edge.p, edge.q2, edge.alpha, edge.beta))
     if contiguity == "relaxed":
         right_ast = ast["right"]
         D.append(
             Transition(
                 q02,
                 Predicte(right_ast["event"], right_ast["cndt"]).neg(),
-                q02,
+                q02_ignore,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
+        D.append(
+            Transition(
+                q02_ignore,
+                Predicte(right_ast["event"], right_ast["cndt"]).neg(),
+                q02_ignore,
                 DataUpdate.Id(),
                 EventStreamUpdate.Id(),
             )
@@ -379,7 +437,16 @@ def compile_combine(ast: AST, ctx: QueryContext) -> DST:
                     Transition(
                         q02,
                         Predicte(e, TrueCondition),
-                        q02,
+                        q02_ignore,
+                        DataUpdate.Id(),
+                        EventStreamUpdate.Id(),
+                    )
+                )
+                D.append(
+                    Transition(
+                        q02_ignore,
+                        Predicte(e, TrueCondition),
+                        q02_ignore,
                         DataUpdate.Id(),
                         EventStreamUpdate.Id(),
                     )
@@ -389,7 +456,16 @@ def compile_combine(ast: AST, ctx: QueryContext) -> DST:
             Transition(
                 q02,
                 Predicte(Predicte.ANY_TYPE, TrueCondition),
-                q02,
+                q02_ignore,
+                DataUpdate.Id(),
+                EventStreamUpdate.Id(),
+            )
+        )
+        D.append(
+            Transition(
+                q02_ignore,
+                Predicte(Predicte.ANY_TYPE, TrueCondition),
+                q02_ignore,
                 DataUpdate.Id(),
                 EventStreamUpdate.Id(),
             )
