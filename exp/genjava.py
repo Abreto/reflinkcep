@@ -5,10 +5,10 @@ from loguru import logger as llogger
 from tqdm import tqdm
 import yaml
 
-from run import find_testcases
+from expsetup import JAVA_DEST, FLINK_RESULT_DIR, find_testcases
 
-DEST = Path(__file__).parent.resolve() / "javapackage"
-RESULTS_DIR = "flinkresults"
+DEST = JAVA_DEST
+RESULTS_DIR = FLINK_RESULT_DIR
 
 JAVA_PACKAGE_ROOT = "science.abreto.flinkcep"
 JAVA_PACKAGE = f"{JAVA_PACKAGE_ROOT}.massive"
@@ -538,6 +538,7 @@ def generate_javapkg(testcases):
 
 def main() -> None:
     DEST.mkdir(exist_ok=True)
+    llogger.info("Generate JAVA classes into {}", DEST)
     testcases = find_testcases()
     generate_javapkg(testcases)
 
