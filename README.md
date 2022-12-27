@@ -10,6 +10,12 @@ pip3 install -e .
 GENCSV=1 python3 -m unittest discover
 ```
 
+## Tests and Coverage
+```
+python3 -m coverage run -m unittest
+python3 -m coverage report
+```
+
 ## Architecture
 
 ```
