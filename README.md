@@ -1,5 +1,10 @@
 # FlinkCEP Recreate
 
+## Install
+```
+pip3 install -e .
+```
+
 ## Generate results in csv
 ```
 GENCSV=1 python3 -m unittest discover
