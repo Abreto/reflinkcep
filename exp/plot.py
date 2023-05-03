@@ -41,3 +41,9 @@ print(matplotlib.matplotlib_fname())
 matplotlib.font_manager._rebuild()
 
 # %%
+# div = "gpat-combine-gpat"
+div = "total"
+df = pd.read_excel("results-collection/" + div + ".xlsx")
+data = df[df['flinkcep_ms'] > 0]
+
+# %%

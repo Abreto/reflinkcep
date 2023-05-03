@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from expsetup import DivInfo
 
-DIVS = ["div-no-gpat", "gpat-combine", "gpat-single"]
+DIVS = ["div-no-gpat", "gpat-combine", "gpat-single", "gpat-combine-gpat"]
 RESULTS_COLLECTION_DEST_DIR = Path(__file__).parent.resolve() / "results-collection"
 
 
